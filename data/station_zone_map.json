@@ -1,0 +1,32 @@
+{
+  "_meta": {
+    "note": "Selected major stations for MVP. TfL zones 1–6.",
+    "source": "Transport for London"
+  },
+  "Canary Wharf": {"tube": [2], "dlr": [2]},
+  "London Bridge": {"tube": [1], "rail": [1]},
+  "Waterloo": {"tube": [1], "rail": [1]},
+  "Bank": {"tube": [1]},
+  "Liverpool Street": {"tube": [1], "rail": [1]},
+  "Shoreditch High Street": {"overground": [1]},
+  "Canada Water": {"tube": [2], "overground": [2]},
+  "Lewisham": {"dlr": [2, 3], "rail": [2, 3]},
+  "Hither Green": {"rail": [3]},
+  "New Cross Gate": {"overground": [2], "rail": [2]},
+  "Peckham Rye": {"rail": [2]},
+  "Brixton": {"tube": [2]},
+  "Clapham Junction": {"rail": [2]},
+  "Clapham Common": {"tube": [2]},
+  "Wimbledon": {"tube": [3], "rail": [3], "tram": [3, 4]},
+  "King's Cross St. Pancras": {"tube": [1], "rail": [1]},
+  "Holborn": {"tube": [1]},
+  "Oxford Circus": {"tube": [1]},
+  "Stratford": {"tube": [2, 3], "dlr": [3], "overground": [2]},
+  "Hammersmith": {"tube": [2], "district": [2]},
+  "Shepherd's Bush": {"tube": [2], "overground": [2]},
+  "Acton Town": {"tube": [3]},
+  "Ealing Broadway": {"tube": [3], "rail": [3], "elizabeth": [3]},
+  "Wembley Central": {"tube": [4], "rail": [4]},
+  "Harrow-on-the-Hill": {"metropolitan": [5]},
+  "Croydon": {"rail": [5], "tram": [3, 4, 5, 6]}
+}
