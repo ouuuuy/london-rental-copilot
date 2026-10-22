@@ -22,7 +22,7 @@ OUTPUT FORMAT (JSON):
   "commute_target": string or null (station or area name),
   "commute_time_minutes": integer or null,
   "lifestyle_tags": ["quiet", "nightlife", "family_friendly", "trendy", "green_space", ...],
-  "suggested_zones": [],
+  "suggested_zones": [{"name": "Canada Water", "rationale": "Jubilee line direct to Canary Wharf, rents 10-15% lower"}],
   "constraint_warnings": ["List any impossible or conflicting constraints"],
   "confidence": "high|medium|low"
 }

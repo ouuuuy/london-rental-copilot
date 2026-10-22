@@ -7,7 +7,22 @@ from dotenv import load_dotenv
 # when OpenAI clients are initialised.
 load_dotenv()
 
-from agents import RequirementParser, RedFlagDetector, ComparisonGenerator, InquiryDrafter
+# Force-reload agent modules so prompt/code edits are picked up during Streamlit dev
+# without requiring a full server restart (Python sys.modules caches imports).
+import importlib
+import agents.requirement_parser
+import agents.redflag_detector
+import agents.comparison_generator
+import agents.inquiry_drafter
+importlib.reload(agents.requirement_parser)
+importlib.reload(agents.redflag_detector)
+importlib.reload(agents.comparison_generator)
+importlib.reload(agents.inquiry_drafter)
+
+from agents.requirement_parser import RequirementParser
+from agents.redflag_detector import RedFlagDetector
+from agents.comparison_generator import ComparisonGenerator
+from agents.inquiry_drafter import InquiryDrafter
 from utils import CostCalculator, TfLCommute
 
 st.set_page_config(
@@ -17,9 +32,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+def _data_file_hash():
+    """Return a hash based on data file mtimes so cache auto-invalidates when JSON updates."""
+    files = [
+        "data/sample_listings.json",
+        "data/borough_council_tax.json",
+        "data/station_zone_map.json",
+        "data/travelcard_costs.json",
+    ]
+    return tuple(os.path.getmtime(f) for f in files if os.path.exists(f))
+
+
 # Load static data
 @st.cache_data
-def load_data():
+def load_data(_hash):
     with open("data/sample_listings.json", "r", encoding="utf-8") as f:
         listings = json.load(f)
     with open("data/borough_council_tax.json", "r", encoding="utf-8") as f:
@@ -30,7 +56,8 @@ def load_data():
         travelcards = json.load(f)
     return listings, council_tax, stations, travelcards
 
-listings, council_tax, stations, travelcards = load_data()
+
+listings, council_tax, stations, travelcards = load_data(_hash=_data_file_hash())
 
 # Sidebar
 with st.sidebar:
