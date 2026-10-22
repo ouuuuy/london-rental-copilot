@@ -12,7 +12,7 @@ from utils import CostCalculator, TfLCommute
 
 st.set_page_config(
     page_title="London Rental Copilot",
-    page_icon="🏠",
+    page_icon=":material/home:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -47,10 +47,10 @@ st.header("Find Your Flat — The Smart Way")
 
 # Tab layout for the four core features
 tab_search, tab_flags, tab_compare, tab_email = st.tabs([
-    "🔍 Smart Search",
-    "🚩 Red Flag Checker",
-    "💰 Compare & Calculate",
-    "✉️ Email Draft",
+    "Smart Search",
+    "Red Flag Checker",
+    "Compare & Calculate",
+    "Email Draft",
 ])
 
 
@@ -60,18 +60,33 @@ def filter_listings(constraints, all_listings):
     excluded = []
     for listing in all_listings:
         reasons = []
+        match_tags = []
         if constraints.get("budget") and listing["price_pcm"] > constraints["budget"]:
             reasons.append(f"£{listing['price_pcm'] - constraints['budget']} over budget")
+        elif constraints.get("budget"):
+            match_tags.append("Budget")
+
         if constraints.get("beds") is not None and listing["beds"] != constraints["beds"]:
             reasons.append(f"Has {listing['beds']} beds, need {constraints['beds']}")
+        elif constraints.get("beds") is not None:
+            match_tags.append("Beds")
+
         if constraints.get("pets_allowed") is True and not listing.get("pets_allowed"):
             reasons.append("No pets allowed")
+        elif constraints.get("pets_allowed") is True:
+            match_tags.append("Pets")
+
         if constraints.get("has_garden") is True and not listing.get("has_garden"):
             reasons.append("No garden")
+        elif constraints.get("has_garden") is True:
+            match_tags.append("Garden")
+
         if reasons:
             excluded.append({"id": listing["id"], "title": listing["title"], "reasons": reasons})
         else:
-            matched.append(listing)
+            listing_copy = dict(listing)
+            listing_copy["match_tags"] = match_tags
+            matched.append(listing_copy)
     return matched, excluded
 
 
@@ -97,6 +112,21 @@ with tab_search:
                 st.markdown("#### Parsed Constraints")
                 st.json(constraints)
 
+                # Show constraint warnings
+                if constraints.get("constraint_warnings"):
+                    for warning in constraints["constraint_warnings"]:
+                        st.warning(warning)
+
+                # Show suggested zones / boroughs
+                suggested = constraints.get("suggested_zones", [])
+                if suggested:
+                    with st.container(border=True):
+                        st.markdown("#### Consider These Areas")
+                        for zone in suggested:
+                            name = zone.get("name", "Unknown area")
+                            rationale = zone.get("rationale", "")
+                            st.markdown(f"- **{name}** — {rationale}")
+
                 # Filter listings
                 matched, excluded = filter_listings(constraints, listings)
 
@@ -105,8 +135,15 @@ with tab_search:
                     st.success(f"Found {len(matched)} matching listing(s)")
                     for m in matched:
                         st.markdown(f"- **{m['title']}** — £{m['price_pcm']}/mo — {m['location_postcode']}")
+                        tags = m.get("match_tags", [])
+                        if tags:
+                            st.caption(f"Matched: {' · '.join(tags)}")
                 else:
-                    st.warning("No listings match your requirements. Try relaxing budget or bedroom count.")
+                    msg = "No listings match your requirements. Try relaxing budget or bedroom count."
+                    if suggested:
+                        zone_names = ", ".join(z.get("name", "") for z in suggested)
+                        msg += f" Alternatively, explore listings in {zone_names}."
+                    st.warning(msg)
 
                 if excluded:
                     with st.expander(f"See {len(excluded)} excluded listings"):
@@ -138,13 +175,13 @@ with tab_flags:
             else:
                 risk = result.get("overall_risk", "low")
                 risk_color = {"low": "green", "medium": "orange", "high": "red"}.get(risk, "gray")
-                risk_emoji = {"low": "🟢", "medium": "🟡", "high": "🔴"}.get(risk, "⚪")
+                risk_emoji = {"low": "[Low]", "medium": "[Medium]", "high": "[High]"}.get(risk, "[Unknown]")
 
                 # SCAM banner
                 flags = result.get("flags", [])
                 scam_flags = [f for f in flags if f.get("category") == "SCAM_RISK" and f.get("severity") == "high"]
                 if scam_flags:
-                    st.error("🚨 **HIGH RISK: Potential Scam Detected** — Do not send money before viewing.")
+                    st.error("**HIGH RISK: Potential Scam Detected** — Do not send money before viewing.")
 
                 st.markdown(f"### Overall Risk: {risk_emoji} {risk.upper()}")
 
@@ -161,7 +198,7 @@ with tab_flags:
                             st.markdown(f"> *Evidence:* \"{evidence}\"")
                             st.markdown(f"{explanation}")
                             if recommendation:
-                                st.markdown(f"💡 *{recommendation}*")
+                                st.markdown(f"*{recommendation}*")
                 else:
                     st.success("No red flags detected. This listing appears normal, but always verify in person.")
 
@@ -230,10 +267,10 @@ with tab_compare:
         st.table(breakdown_data)
 
         # Disclaimer
-        st.caption("⚠️ Council tax estimate is based on Band C-D midpoint when band is unknown. Verify with landlord.")
+        st.caption("Council tax estimate is based on Band C-D midpoint when band is unknown. Verify with landlord.")
 
         st.markdown("---")
-        st.subheader("💡 AI Comparison Summary")
+        st.subheader("AI Comparison Summary")
 
         with st.spinner("Analyzing trade-offs..."):
             comparator = ComparisonGenerator()
@@ -263,9 +300,9 @@ with tab_compare:
                 if wb != "tie":
                     winner = next((r for r in results if r["listing"]["id"] == wb), None)
                     if winner:
-                        st.success(f"🏆 Best for Budget\n\n**{winner['listing']['title']}**\n£{winner['cost']['true_cost']}/mo")
+                        st.success(f"Best for Budget\n\n**{winner['listing']['title']}**\n£{winner['cost']['true_cost']}/mo")
                 else:
-                    st.info("💰 Budget: Tie\n\nAll selected listings have similar total costs.")
+                    st.info("Budget: Tie\n\nAll selected listings have similar total costs.")
 
         with win_col2:
             wc = comparison.get("winner_for_commute", "tie")
@@ -273,9 +310,9 @@ with tab_compare:
                 if wc != "tie":
                     winner = next((r for r in results if r["listing"]["id"] == wc), None)
                     if winner:
-                        st.success(f"🏆 Best for Commute\n\n**{winner['listing']['title']}**\n£{winner['cost']['commute']}/mo")
+                        st.success(f"Best for Commute\n\n**{winner['listing']['title']}**\n£{winner['cost']['commute']}/mo")
                 else:
-                    st.info("🚇 Commute: Tie\n\nAll selected listings have similar commute costs.")
+                    st.info("Commute: Tie\n\nAll selected listings have similar commute costs.")
 
         # Caveats card
         if comparison.get("caveats"):
@@ -288,6 +325,9 @@ with tab_compare:
 with tab_email:
     st.subheader("Draft an Enquiry Email")
     st.markdown("Select a listing and tell us about yourself. We'll generate a personalised draft.")
+
+    if "email_draft" not in st.session_state:
+        st.session_state.email_draft = None
 
     email_listing = st.selectbox(
         "Choose a listing:",
@@ -314,7 +354,15 @@ with tab_email:
             move_in_date = st.text_input("Move-in date:", value="1st July 2026")
             has_pets = st.checkbox("I have pets")
 
-        if st.button("Generate Draft", key="email_btn"):
+        col_gen, col_regen = st.columns(2)
+        with col_gen:
+            generate_clicked = st.button("Generate Draft", key="email_btn")
+        with col_regen:
+            regen_clicked = st.button("Regenerate", key="regen_btn")
+            if not st.session_state.email_draft:
+                regen_clicked = False
+
+        if generate_clicked or regen_clicked:
             with st.spinner("Drafting..."):
                 # Get red flags first (needed for adaptive logic)
                 detector = RedFlagDetector()
@@ -327,11 +375,12 @@ with tab_email:
                 }
 
                 drafter = InquiryDrafter()
-                draft = drafter.draft(listing, red_flags, user_profile)
+                st.session_state.email_draft = drafter.draft(listing, red_flags, user_profile)
 
+        if st.session_state.email_draft:
             st.markdown("---")
             st.markdown("#### Email Draft")
-            st.code(draft, language="text")
+            st.code(st.session_state.email_draft, language="text")
 
             st.info("This is an AI-generated draft. Please review and personalise before sending.")
 

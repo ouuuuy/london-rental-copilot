@@ -53,18 +53,18 @@ RULES:
 
 | ID | Input | Expected Output (Key fields) | Actual | Status |
 |----|-------|---------------------------|--------|--------|
-| T1 | "2 bed, £1,800, pet-friendly, 30 min to Canary Wharf" | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` — Filter: 0 matches (dataset has no 2-bed pet-friendly under £1,800) | ✅ Pass |
-| T2 | "I want to live in a quiet place, budget 1500" | `{budget: 1500, lifestyle_tags: ["quiet"], confidence: "low"}` | `{budget: 1500, beds: null, lifestyle_tags: ["quiet"], confidence: "low"}` — Filter: 5 matches (all listings ≤£1,500, beds not filtered) | ✅ Pass |
-| T3 | "Zone 1, under £2000, no pets" | `{budget: 2000, pets_allowed: false, confidence: "medium"}` | `{budget: 2000, pets_allowed: false, commute_target: "Zone 1", confidence: "medium"}` — Filter: 11 matches (excluded 3 pet-friendly listings; Zone 1 not yet enforced by Filter) | ⚠️ Partial pass |
+| T1 | "2 bed, £1,800, pet-friendly, 30 min to Canary Wharf" | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` — Filter: 0 matches (dataset has no 2-bed pet-friendly under £1,800) | [OK] Pass |
+| T2 | "I want to live in a quiet place, budget 1500" | `{budget: 1500, lifestyle_tags: ["quiet"], confidence: "low"}` | `{budget: 1500, beds: null, lifestyle_tags: ["quiet"], confidence: "low"}` — Filter: 5 matches (all listings ≤£1,500, beds not filtered) | [OK] Pass |
+| T3 | "Zone 1, under £2000, no pets" | `{budget: 2000, pets_allowed: false, confidence: "medium"}` | `{budget: 2000, pets_allowed: false, commute_target: "Zone 1", confidence: "medium"}` — Filter: 11 matches (excluded 3 pet-friendly listings; Zone 1 not yet enforced by Filter) | [WARN] Partial pass |
 
 ---
 
 ### Iteration Log
 
 **[2026-05-21] v1.0 Initial Test Run**:
-- T1 (English standard input): Parser correctly extracted budget/ beds/ pets/ commute_target/ commute_time. Filter 0 matches — consistent with dataset reality (no 2-bed + pet-friendly + ≤£1,800 listings). ✅ Pass
-- T2 (Chinese fuzzy input): Parser correctly extracted budget=1500, mapped "quiet" to lifestyle_tags=["quiet"]. beds not mentioned → null, Filter correctly does not filter beds. ✅ Pass
-- T3 (Negative condition): Parser correctly extracted budget=2000, pets_allowed=false. commute_target="Zone 1" was extracted but **Filter has not yet integrated zone filtering logic**, therefore returned all non-pet-friendly listings ≤£2,000 (11 items). ⚠️ This is a known feature gap, not a Prompt bug. Will be addressed after CostCalculator / TfLCommute integration is complete. Partial pass.
+- T1 (English standard input): Parser correctly extracted budget/ beds/ pets/ commute_target/ commute_time. Filter 0 matches — consistent with dataset reality (no 2-bed + pet-friendly + ≤£1,800 listings). [OK] Pass
+- T2 (Chinese fuzzy input): Parser correctly extracted budget=1500, mapped "quiet" to lifestyle_tags=["quiet"]. beds not mentioned → null, Filter correctly does not filter beds. [OK] Pass
+- T3 (Negative condition): Parser correctly extracted budget=2000, pets_allowed=false. commute_target="Zone 1" was extracted but **Filter has not yet integrated zone filtering logic**, therefore returned all non-pet-friendly listings ≤£2,000 (11 items). [WARN] This is a known feature gap, not a Prompt bug. Will be addressed after CostCalculator / TfLCommute integration is complete. Partial pass.
 
 **Current status**: v1.0 Prompt needs no modification, 3/3 cases are correct at the Parser level. Next iteration will be on RedFlagDetector (Day 3).
 
@@ -135,11 +135,11 @@ RULES:
 
 | ID | Listing | Expected Flags | Actual | Status |
 |----|---------|---------------|--------|--------|
-| RF1 | listing_003 — SCAM studio | `SCAM_RISK (High)`: "Send deposit via bank transfer" | `SCAM_RISK (High)` — evidence complete original text quote; overall_risk=high | ✅ Pass |
-| RF2 | listing_004 — HIDDEN_COST | `HIDDEN_COST_RISK (Medium)`: "Rent excludes bills" (no council tax) | `HIDDEN_COST_RISK (Medium)` — evidence: "Rent excludes bills" | ✅ Pass (v1.1) |
-| RF3 | listing_006 — DESCRIPTION | `DESCRIPTION_MISMATCH (Low)`: "Truly luxury living" + only 3 images | `HIDDEN_COST_RISK (Medium)` — DESCRIPTION judged by the model as common, not flagged | ⚠️ Acceptable |
-| RF4 | listing_005 — PRESSURE | `LANDLORD_PRESSURE (Medium)`: "HURRY!", "Don't sleep on this!!!" | `LANDLORD_PRESSURE (Medium)` + `HIDDEN_COST_RISK (Medium)` (bills_included:false) | ✅ Pass |
-| RF5 | listing_008 — Clean | No flags, `overall_risk: "low"` | flags=[], overall_risk="low" | ✅ Pass |
+| RF1 | listing_003 — SCAM studio | `SCAM_RISK (High)`: "Send deposit via bank transfer" | `SCAM_RISK (High)` — evidence complete original text quote; overall_risk=high | [OK] Pass |
+| RF2 | listing_004 — HIDDEN_COST | `HIDDEN_COST_RISK (Medium)`: "Rent excludes bills" (no council tax) | `HIDDEN_COST_RISK (Medium)` — evidence: "Rent excludes bills" | [OK] Pass (v1.1) |
+| RF3 | listing_006 — DESCRIPTION | `DESCRIPTION_MISMATCH (Low)`: "Truly luxury living" + only 3 images | `HIDDEN_COST_RISK (Medium)` — DESCRIPTION judged by the model as common, not flagged | [WARN] Acceptable |
+| RF4 | listing_005 — PRESSURE | `LANDLORD_PRESSURE (Medium)`: "HURRY!", "Don't sleep on this!!!" | `LANDLORD_PRESSURE (Medium)` + `HIDDEN_COST_RISK (Medium)` (bills_included:false) | [OK] Pass |
+| RF5 | listing_008 — Clean | No flags, `overall_risk: "low"` | flags=[], overall_risk="low" | [OK] Pass |
 
 ---
 
@@ -149,17 +149,17 @@ RULES:
 
 | Metric | Result |
 |--------|--------|
-| SCAM Recall (RF1) | 100% ✅ |
-| Clean listing High-severity FP | 0 ✅ |
-| Clean listing Low/Medium FP | 0 ✅ |
-| HIDDEN_COST Recall (RF2) | 0% ❌ |
-| DESCRIPTION Recall (RF3) | 100% ✅ |
-| PRESSURE Recall (RF4) | 100% ✅ |
+| SCAM Recall (RF1) | 100% [OK] |
+| Clean listing High-severity FP | 0 [OK] |
+| Clean listing Low/Medium FP | 0 [OK] |
+| HIDDEN_COST Recall (RF2) | 0% [FAIL] |
+| DESCRIPTION Recall (RF3) | 100% [OK] |
+| PRESSURE Recall (RF4) | 100% [OK] |
 
 **RF1 — listing_003 (SCAM)**:
 - Output: `SCAM_RISK (High)`, evidence complete quote "Landlord is abroad. Send deposit via bank transfer to secure. Viewing available after payment."
 - The notes field also proactively added "Price is significantly below market rate for central London" and "Only one image provided" — this is value-added analysis, no false positives generated.
-- ✅ Pass
+- [OK] Pass
 
 **RF2 — listing_004 (HIDDEN_COST)** — **False Negative**:
 - Description: "Rent excludes bills. Professional tenants preferred."
@@ -170,16 +170,16 @@ RULES:
 
 **RF3 — listing_006 (DESCRIPTION_MISMATCH)**:
 - Output: `DESCRIPTION_MISMATCH (Low)`, evidence "Truly luxury living in the heart of Angel. High-spec finish throughout."
-- ✅ Pass
+- [OK] Pass
 
 **RF4 — listing_005 (LANDLORD_PRESSURE)**:
 - Output: `LANDLORD_PRESSURE (Medium)`, evidence fully covers "HURRY!...Don't sleep on this!!!"
 - Note: In the plan table, Expected severity was originally High, but the Prompt defines LANDLORD_PRESSURE as Medium. Actual output Medium is consistent with the Prompt definition; plan table corrected.
-- ✅ Pass
+- [OK] Pass
 
 **RF5 — listing_008 (Clean)**:
 - Output: flags=[], overall_risk="low". No false positives.
-- ✅ Pass
+- [OK] Pass
 
 ---
 
@@ -203,14 +203,14 @@ In `RedFlagDetector.SYSTEM_PROMPT`'s HIDDEN_COST_RISK definition, changed the tr
 
 | Metric | v1.0 | v1.1 |
 |--------|------|------|
-| SCAM Recall (RF1) | 100% ✅ | 100% ✅ |
-| HIDDEN_COST Recall (RF2) | 0% ❌ | 100% ✅ |
-| DESCRIPTION Recall (RF3) | 100% ✅ | 0% ⚠️ |
-| PRESSURE Recall (RF4) | 100% ✅ | 100% ✅ |
-| Clean FP (RF5) | 0 ✅ | 0 ✅ |
+| SCAM Recall (RF1) | 100% [OK] | 100% [OK] |
+| HIDDEN_COST Recall (RF2) | 0% [FAIL] | 100% [OK] |
+| DESCRIPTION Recall (RF3) | 100% [OK] | 0% [WARN] |
+| PRESSURE Recall (RF4) | 100% [OK] | 100% [OK] |
+| Clean FP (RF5) | 0 [OK] | 0 [OK] |
 
 **RF2 — listing_004 (HIDDEN_COST)**:
-- Output: `HIDDEN_COST_RISK (Medium)`, evidence: "Rent excludes bills". ✅ Fix successful.
+- Output: `HIDDEN_COST_RISK (Medium)`, evidence: "Rent excludes bills". [OK] Fix successful.
 - The notes also self-corrected "'Professional tenants preferred' is a common preference and not a pressure tactic" — demonstrating the conservative principle.
 
 **RF3 — listing_006 (DESCRIPTION_MISMATCH)** — **New False Negative**:
@@ -219,7 +219,7 @@ In `RedFlagDetector.SYSTEM_PROMPT`'s HIDDEN_COST_RISK definition, changed the tr
 - **Assessment**: This is an acceptable trade-off. Acceptance criteria allow DESCRIPTION False Negative ≤ 1. From a product manager perspective, Medium HIDDEN_COST provides higher decision-making value for the user than Low DESCRIPTION_MISMATCH.
 
 **RF4 — listing_005 (PRESSURE)**:
-- Retained `LANDLORD_PRESSURE (Medium)` ✅
+- Retained `LANDLORD_PRESSURE (Medium)` [OK]
 - **New**: Also output `HIDDEN_COST_RISK (Medium)`, evidence is `bills_included: false` (from JSON structured field, not description text).
 - **Assessment**: Strictly speaking, this violates the "Only flag if there is textual evidence in the listing" rule, but `bills_included` itself is also part of the listing data, and this listing indeed did not disclose bill details. It did not affect the overall risk level (remains medium), not considered a serious false positive.
 
@@ -297,31 +297,31 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
 
 | Metric | Result |
 |--------|--------|
-| ID1: HIDDEN_COST → council tax question | ✅ Pass |
-| ID2: student → exemption mentioned | ✅ Pass (after adding persona hint) |
-| ID2: pet → responsible pet owner | ✅ Pass |
-| ID3: clean → no council tax question | ✅ Pass (after filtering missing_info from context) |
-| ID3: tone concise professional | ✅ Pass |
-| All drafts 150-200 words | ✅ Pass |
+| ID1: HIDDEN_COST → council tax question | [OK] Pass |
+| ID2: student → exemption mentioned | [OK] Pass (after adding persona hint) |
+| ID2: pet → responsible pet owner | [OK] Pass |
+| ID3: clean → no council tax question | [OK] Pass (after filtering missing_info from context) |
+| ID3: tone concise professional | [OK] Pass |
+| All drafts 150-200 words | [OK] Pass |
 
 **ID1 — listing_004 (HIDDEN_COST) + young professional**:
 - Output: Draft includes explicit question "could you provide information regarding the council tax band for the property, as well as any additional service charges that may apply."
-- ✅ Pass
+- [OK] Pass
 
 **ID2 — listing_012 (clean) + student + pets**:
 - First attempt: Model mentioned "student" and "pet" but omitted "council tax exemption".
 - **Fix**: Added persona hint in `_build_context`: `"(student: mention council tax exemption eligibility)"`.
 - Second attempt: "I am a full-time student and may be eligible for council tax exemption, which is an important consideration for me."
-- ✅ Pass
+- [OK] Pass
 
 **ID3 — listing_008 (clean) + young professional**:
 - First attempt: Model asked about council tax despite no red flags. Root cause: `missing_info` from RedFlagDetector contained "Council tax information", which was treated by the model as a trigger.
 - **Fix**: Filtered `missing_info` and `notes` from the context passed to InquiryDrafter. Added explicit rule: "If no red flags are detected, do NOT ask about council tax or service charges."
 - Second attempt: Concise standard email with only viewing request. No council tax question.
-- ✅ Pass
+- [OK] Pass
 
 **RedFlagDetector issue discovered during InquiryDrafter testing**:
 - After switching from Deepseek to OpenAI (gpt-4o-mini), `listing_008` and `listing_012` (both clean) were falsely flagged with `HIDDEN_COST_RISK` because the model used the structured field `bills_included: false` as implicit evidence.
 - **Fix**: Added `_STRUCTURED_FIELDS_TO_EXCLUDE` in `redflag_detector.py` to filter out `bills_included`, `pets_allowed`, `has_garden`, etc. from the LLM context. This forces the model to rely solely on textual evidence in the title and description.
 - Post-fix verification: `listing_003` (SCAM) still correctly flagged; `listing_008` and `listing_012` returned clean.
-- ✅ Fixed
+- [OK] Fixed

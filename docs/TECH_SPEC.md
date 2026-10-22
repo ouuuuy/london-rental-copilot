@@ -153,7 +153,7 @@ Open `http://localhost:8501` in your browser.
 - **Council Tax**: 
   - If listing has `council_tax_band` field → use exact rate from `borough_council_tax.json`
   - If band not specified → estimate as Band C-D midpoint for that borough
-  - Add disclaimer: "⚠️ Actual band (A-H) set by VOA. Verify with landlord."
+  - Add disclaimer: "[WARN] Actual band (A-H) set by VOA. Verify with landlord."
   - **Never infer band from bedroom count** (bands are based on 1991 valuations)
 - Commute: postcode prefix → borough → station → TfL zone → travelcard cost from `travelcard_costs.json`.
 - Utilities: fixed heuristic (`£120` for 1-bed, `£160` for 2-bed).

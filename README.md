@@ -1,4 +1,4 @@
-# London Rental Copilot 🏠🤖
+# London Rental Copilot 
 
 > An AI product experiment born from the blood, sweat, and tears of renting in London
 >
@@ -18,10 +18,10 @@ Renting in London is broken. The average searcher spends **8+ hours/week** on pr
 
 An AI copilot that goes beyond filtering to **actively warn** and **contextualize**:
 
-- 🧠 **Smart Requirement Parser**: Describe your ideal home in plain English — "2 bed, £1,800, 30 min to Canary Wharf, pet-friendly" — and get realistic zone recommendations you hadn't considered.
-- 🚩 **Red Flag Detector**: AI scans listings for scam patterns, hidden costs, and description mismatches. Every warning includes an explanation.
-- 💰 **True Cost Calculator**: Compare properties by total monthly outlay (rent + council tax + commute + estimated utilities), not just headline rent.
-- ✉️ **Instant Inquiry Drafter**: Generate personalized, polite enquiry emails in seconds — tailored to your profile and any red flags detected.
+-  **Smart Requirement Parser**: Describe your ideal home in plain English — "2 bed, £1,800, 30 min to Canary Wharf, pet-friendly" — and get realistic zone recommendations you hadn't considered.
+-  **Red Flag Detector**: AI scans listings for scam patterns, hidden costs, and description mismatches. Every warning includes an explanation.
+-  **True Cost Calculator**: Compare properties by total monthly outlay (rent + council tax + commute + estimated utilities), not just headline rent.
+-  **Instant Inquiry Drafter**: Generate personalized, polite enquiry emails in seconds — tailored to your profile and any red flags detected.
 
 ## Product Highlights
 

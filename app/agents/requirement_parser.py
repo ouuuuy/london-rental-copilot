@@ -35,7 +35,10 @@ RULES:
 5. Extract commute target: station name or area (e.g., "Canary Wharf", "City", "Shoreditch"). Otherwise null.
 6. Extract commute time: number before "min" or "minutes". Otherwise null.
 7. Extract lifestyle tags from adjectives describing vibe: "quiet", "lively", "trendy", "family-friendly", "green", "posh", etc.
-8. suggested_zones is always an empty array [] in this version.
+8. suggested_zones: recommend 2-3 additional London zones or boroughs the user may not have considered.
+   Base recommendations on the commute_target, lifestyle_tags, and budget.
+   Each item must be an object: {"name": "Borough or Zone name", "rationale": "One sentence why it fits"}.
+   If no useful suggestion can be made, return an empty array.
 9. Flag impossible constraints (e.g., "Zone 1 studio under £800" → "Statistically unlikely in London").
 10. If information is missing, use null. Do not guess or hallucinate.
 11. confidence = "high" if budget+beds+commute all present, "medium" if 2 present, "low" if 1 or fewer.
@@ -60,8 +63,11 @@ RULES:
                 temperature=0.2,
             )
             result = json.loads(response.choices[0].message.content)
-            # Ensure suggested_zones is always an empty array in v1.0
-            result["suggested_zones"] = []
+            # Guard against malformed LLM output
+            if not isinstance(result.get("suggested_zones"), list):
+                result["suggested_zones"] = []
+            if not isinstance(result.get("constraint_warnings"), list):
+                result["constraint_warnings"] = []
             return result
         except Exception as e:
             # Graceful fallback: return low-confidence empty result with error info
