@@ -6,6 +6,8 @@ import os
 import sys
 import json
 
+import pytest
+
 # Add app to path (same as Streamlit does)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
 
@@ -19,6 +21,11 @@ import importlib
 importlib.reload(rp_mod)
 
 from agents.requirement_parser import RequirementParser
+
+pytestmark = pytest.mark.skipif(
+    not os.getenv("OPENAI_API_KEY"),
+    reason="Requires OPENAI_API_KEY environment variable",
+)
 
 
 def test_suggested_zones_not_empty():

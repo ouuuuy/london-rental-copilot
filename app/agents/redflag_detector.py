@@ -1,7 +1,7 @@
 import os
 import json
 from typing import Dict, List, Any
-from openai import OpenAI
+from openai import OpenAI, APIError, APITimeoutError
 
 
 class RedFlagDetector:
@@ -95,10 +95,24 @@ RULES:
                 temperature=0.1,
             )
             return json.loads(response.choices[0].message.content)
-        except Exception as e:
+        except (APIError, APITimeoutError):
             return {
                 "overall_risk": "unknown",
                 "flags": [],
-                "missing_info": [f"Analysis error: {str(e)}"],
+                "missing_info": ["AI service temporarily unavailable. Please try again in a moment."],
+                "notes": "Could not complete analysis.",
+            }
+        except json.JSONDecodeError:
+            return {
+                "overall_risk": "unknown",
+                "flags": [],
+                "missing_info": ["Received an unexpected response from the AI. Please try again."],
+                "notes": "Could not complete analysis.",
+            }
+        except Exception:
+            return {
+                "overall_risk": "unknown",
+                "flags": [],
+                "missing_info": ["An unexpected error occurred. Please try again."],
                 "notes": "Could not complete analysis.",
             }

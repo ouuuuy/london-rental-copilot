@@ -1,7 +1,7 @@
 import os
 import json
 from typing import Dict, List, Any
-from openai import OpenAI
+from openai import OpenAI, APIError, APITimeoutError
 
 
 class ComparisonGenerator:
@@ -72,11 +72,27 @@ TONE: Friendly, practical, cautious, concise. Never say "rent this one" — alwa
             )
             return json.loads(response.choices[0].message.content)
 
-        except Exception as e:
+        except (APIError, APITimeoutError):
             return {
                 "summary": "Comparison summary unavailable. Please review the cost breakdown above.",
                 "trade_offs": [],
                 "winner_for_budget": "tie",
                 "winner_for_commute": "tie",
-                "caveats": [f"Could not generate AI comparison at this time: {str(e)}"],
+                "caveats": ["AI service temporarily unavailable. Please try again in a moment."],
+            }
+        except json.JSONDecodeError:
+            return {
+                "summary": "Comparison summary unavailable. Please review the cost breakdown above.",
+                "trade_offs": [],
+                "winner_for_budget": "tie",
+                "winner_for_commute": "tie",
+                "caveats": ["Received an unexpected response from the AI. Please try again."],
+            }
+        except Exception:
+            return {
+                "summary": "Comparison summary unavailable. Please review the cost breakdown above.",
+                "trade_offs": [],
+                "winner_for_budget": "tie",
+                "winner_for_commute": "tie",
+                "caveats": ["An unexpected error occurred. Please try again."],
             }

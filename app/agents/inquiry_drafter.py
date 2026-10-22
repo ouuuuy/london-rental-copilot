@@ -1,6 +1,6 @@
 import os
 from typing import Dict, Any
-from openai import OpenAI
+from openai import OpenAI, APIError, APITimeoutError
 
 
 class InquiryDrafter:
@@ -67,8 +67,10 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
                 max_tokens=600,
             )
             return response.choices[0].message.content.strip()
-        except Exception as e:
-            return f"[Error generating draft: {str(e)}]"
+        except (APIError, APITimeoutError):
+            return "AI service temporarily unavailable. Please try again in a moment."
+        except Exception:
+            return "An unexpected error occurred while drafting the email. Please try again."
 
     @staticmethod
     def _build_context(

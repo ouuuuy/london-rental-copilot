@@ -1,7 +1,7 @@
 import os
 import json
 from typing import Dict, List, Any
-from openai import OpenAI
+from openai import OpenAI, APIError, APITimeoutError
 
 
 class RequirementParser:
@@ -69,8 +69,7 @@ RULES:
             if not isinstance(result.get("constraint_warnings"), list):
                 result["constraint_warnings"] = []
             return result
-        except Exception as e:
-            # Graceful fallback: return low-confidence empty result with error info
+        except (APIError, APITimeoutError):
             return {
                 "budget": None,
                 "beds": None,
@@ -80,6 +79,32 @@ RULES:
                 "commute_time_minutes": None,
                 "lifestyle_tags": [],
                 "suggested_zones": [],
-                "constraint_warnings": [f"Parser error: {str(e)}"],
+                "constraint_warnings": ["AI service temporarily unavailable. Please try again in a moment."],
+                "confidence": "low",
+            }
+        except json.JSONDecodeError:
+            return {
+                "budget": None,
+                "beds": None,
+                "pets_allowed": None,
+                "has_garden": None,
+                "commute_target": None,
+                "commute_time_minutes": None,
+                "lifestyle_tags": [],
+                "suggested_zones": [],
+                "constraint_warnings": ["Received an unexpected response from the AI. Please try again."],
+                "confidence": "low",
+            }
+        except Exception:
+            return {
+                "budget": None,
+                "beds": None,
+                "pets_allowed": None,
+                "has_garden": None,
+                "commute_target": None,
+                "commute_time_minutes": None,
+                "lifestyle_tags": [],
+                "suggested_zones": [],
+                "constraint_warnings": ["An unexpected error occurred. Please try again."],
                 "confidence": "low",
             }

@@ -7,23 +7,12 @@ from dotenv import load_dotenv
 # when OpenAI clients are initialised.
 load_dotenv()
 
-# Force-reload agent modules so prompt/code edits are picked up during Streamlit dev
-# without requiring a full server restart (Python sys.modules caches imports).
-import importlib
-import agents.requirement_parser
-import agents.redflag_detector
-import agents.comparison_generator
-import agents.inquiry_drafter
-importlib.reload(agents.requirement_parser)
-importlib.reload(agents.redflag_detector)
-importlib.reload(agents.comparison_generator)
-importlib.reload(agents.inquiry_drafter)
-
 from agents.requirement_parser import RequirementParser
 from agents.redflag_detector import RedFlagDetector
 from agents.comparison_generator import ComparisonGenerator
 from agents.inquiry_drafter import InquiryDrafter
-from utils import CostCalculator, TfLCommute
+from utils import CostCalculator
+from utils.filter_engine import filter_listings
 
 st.set_page_config(
     page_title="London Rental Copilot",
@@ -57,7 +46,7 @@ def load_data(_hash):
     return listings, council_tax, stations, travelcards
 
 
-listings, council_tax, stations, travelcards = load_data(_hash=_data_file_hash())
+listings, council_tax, stations, _ = load_data(_hash=_data_file_hash())
 
 # Sidebar
 with st.sidebar:
@@ -81,42 +70,6 @@ tab_search, tab_flags, tab_compare, tab_email = st.tabs([
 ])
 
 
-def filter_listings(constraints, all_listings):
-    """Deterministic filter: matched + excluded with reasons."""
-    matched = []
-    excluded = []
-    for listing in all_listings:
-        reasons = []
-        match_tags = []
-        if constraints.get("budget") and listing["price_pcm"] > constraints["budget"]:
-            reasons.append(f"£{listing['price_pcm'] - constraints['budget']} over budget")
-        elif constraints.get("budget"):
-            match_tags.append("Budget")
-
-        if constraints.get("beds") is not None and listing["beds"] != constraints["beds"]:
-            reasons.append(f"Has {listing['beds']} beds, need {constraints['beds']}")
-        elif constraints.get("beds") is not None:
-            match_tags.append("Beds")
-
-        if constraints.get("pets_allowed") is True and not listing.get("pets_allowed"):
-            reasons.append("No pets allowed")
-        elif constraints.get("pets_allowed") is True:
-            match_tags.append("Pets")
-
-        if constraints.get("has_garden") is True and not listing.get("has_garden"):
-            reasons.append("No garden")
-        elif constraints.get("has_garden") is True:
-            match_tags.append("Garden")
-
-        if reasons:
-            excluded.append({"id": listing["id"], "title": listing["title"], "reasons": reasons})
-        else:
-            listing_copy = dict(listing)
-            listing_copy["match_tags"] = match_tags
-            matched.append(listing_copy)
-    return matched, excluded
-
-
 with tab_search:
     st.subheader("Describe What You Need")
     natural_query = st.text_area(
@@ -132,50 +85,47 @@ with tab_search:
                 parser = RequirementParser()
                 constraints = parser.parse(natural_query)
 
-            if constraints is None:
-                st.error("Failed to parse requirements. Please try again.")
+            # Show parsed constraints
+            st.markdown("#### Parsed Constraints")
+            st.json(constraints)
+
+            # Show constraint warnings
+            if constraints.get("constraint_warnings"):
+                for warning in constraints["constraint_warnings"]:
+                    st.warning(warning)
+
+            # Show suggested zones / boroughs
+            suggested = constraints.get("suggested_zones", [])
+            if suggested:
+                with st.container(border=True):
+                    st.markdown("#### Consider These Areas")
+                    for zone in suggested:
+                        name = zone.get("name", "Unknown area")
+                        rationale = zone.get("rationale", "")
+                        st.markdown(f"- **{name}** — {rationale}")
+
+            # Filter listings
+            matched, excluded = filter_listings(constraints, listings)
+
+            st.markdown("---")
+            if matched:
+                st.success(f"Found {len(matched)} matching listing(s)")
+                for m in matched:
+                    st.markdown(f"- **{m['title']}** — £{m['price_pcm']}/mo — {m['location_postcode']}")
+                    tags = m.get("match_tags", [])
+                    if tags:
+                        st.caption(f"Matched: {' · '.join(tags)}")
             else:
-                # Show parsed constraints
-                st.markdown("#### Parsed Constraints")
-                st.json(constraints)
-
-                # Show constraint warnings
-                if constraints.get("constraint_warnings"):
-                    for warning in constraints["constraint_warnings"]:
-                        st.warning(warning)
-
-                # Show suggested zones / boroughs
-                suggested = constraints.get("suggested_zones", [])
+                msg = "No listings match your requirements. Try relaxing budget or bedroom count."
                 if suggested:
-                    with st.container(border=True):
-                        st.markdown("#### Consider These Areas")
-                        for zone in suggested:
-                            name = zone.get("name", "Unknown area")
-                            rationale = zone.get("rationale", "")
-                            st.markdown(f"- **{name}** — {rationale}")
+                    zone_names = ", ".join(z.get("name", "") for z in suggested)
+                    msg += f" Alternatively, explore listings in {zone_names}."
+                st.warning(msg)
 
-                # Filter listings
-                matched, excluded = filter_listings(constraints, listings)
-
-                st.markdown("---")
-                if matched:
-                    st.success(f"Found {len(matched)} matching listing(s)")
-                    for m in matched:
-                        st.markdown(f"- **{m['title']}** — £{m['price_pcm']}/mo — {m['location_postcode']}")
-                        tags = m.get("match_tags", [])
-                        if tags:
-                            st.caption(f"Matched: {' · '.join(tags)}")
-                else:
-                    msg = "No listings match your requirements. Try relaxing budget or bedroom count."
-                    if suggested:
-                        zone_names = ", ".join(z.get("name", "") for z in suggested)
-                        msg += f" Alternatively, explore listings in {zone_names}."
-                    st.warning(msg)
-
-                if excluded:
-                    with st.expander(f"See {len(excluded)} excluded listings"):
-                        for e in excluded:
-                            st.markdown(f"**{e['title']}**: {', '.join(e['reasons'])}")
+            if excluded:
+                with st.expander(f"See {len(excluded)} excluded listings"):
+                    for e in excluded:
+                        st.markdown(f"**{e['title']}**: {', '.join(e['reasons'])}")
 
 
 with tab_flags:
@@ -187,53 +137,55 @@ with tab_flags:
     )
     if selected_listing:
         listing_id = selected_listing[0]
-        listing = next(l for l in listings if l["id"] == listing_id)
-        st.markdown(f"**Title**: {listing['title']}")
-        st.markdown(f"**Description**: {listing['description']}")
-        st.markdown(f"**Price**: £{listing['price_pcm']}/month | **Location**: {listing['location_postcode']}")
+        listing = next((l for l in listings if l["id"] == listing_id), None)
+        if listing is None:
+            st.error("Listing not found.")
+        else:
+            st.markdown(f"**Title**: {listing['title']}")
+            st.markdown(f"**Description**: {listing['description']}")
+            st.markdown(f"**Price**: £{listing['price_pcm']}/month | **Location**: {listing['location_postcode']}")
 
-        if st.button("Analyze for Red Flags", key="flag_btn"):
-            with st.spinner("Scanning..."):
-                detector = RedFlagDetector()
-                result = detector.analyze(listing)
+            if st.button("Analyze for Red Flags", key="flag_btn"):
+                with st.spinner("Scanning..."):
+                    detector = RedFlagDetector()
+                    result = detector.analyze(listing)
 
-            if result.get("overall_risk") == "unknown":
-                st.error("Could not complete analysis. Check API key and connection.")
-            else:
-                risk = result.get("overall_risk", "low")
-                risk_color = {"low": "green", "medium": "orange", "high": "red"}.get(risk, "gray")
-                risk_emoji = {"low": "[Low]", "medium": "[Medium]", "high": "[High]"}.get(risk, "[Unknown]")
-
-                # SCAM banner
-                flags = result.get("flags", [])
-                scam_flags = [f for f in flags if f.get("category") == "SCAM_RISK" and f.get("severity") == "high"]
-                if scam_flags:
-                    st.error("**HIGH RISK: Potential Scam Detected** — Do not send money before viewing.")
-
-                st.markdown(f"### Overall Risk: {risk_emoji} {risk.upper()}")
-
-                if flags:
-                    for flag in flags:
-                        sev = flag.get("severity", "low").upper()
-                        cat = flag.get("category", "")
-                        evidence = flag.get("evidence", "")
-                        explanation = flag.get("explanation", "")
-                        recommendation = flag.get("recommendation", "")
-
-                        with st.container(border=True):
-                            st.markdown(f"**{cat}** — Severity: `{sev}`")
-                            st.markdown(f"> *Evidence:* \"{evidence}\"")
-                            st.markdown(f"{explanation}")
-                            if recommendation:
-                                st.markdown(f"*{recommendation}*")
+                if result.get("overall_risk") == "unknown":
+                    st.error("Could not complete analysis. Check API key and connection.")
                 else:
-                    st.success("No red flags detected. This listing appears normal, but always verify in person.")
+                    risk = result.get("overall_risk", "low")
+                    risk_emoji = {"low": "[Low]", "medium": "[Medium]", "high": "[High]"}.get(risk, "[Unknown]")
 
-                missing = result.get("missing_info", [])
-                if missing:
-                    with st.expander("Missing Information"):
-                        for m in missing:
-                            st.markdown(f"- {m}")
+                    # SCAM banner
+                    flags = result.get("flags", [])
+                    scam_flags = [f for f in flags if f.get("category") == "SCAM_RISK" and f.get("severity") == "high"]
+                    if scam_flags:
+                        st.error("**HIGH RISK: Potential Scam Detected** — Do not send money before viewing.")
+
+                    st.markdown(f"### Overall Risk: {risk_emoji} {risk.upper()}")
+
+                    if flags:
+                        for flag in flags:
+                            sev = flag.get("severity", "low").upper()
+                            cat = flag.get("category", "")
+                            evidence = flag.get("evidence", "")
+                            explanation = flag.get("explanation", "")
+                            recommendation = flag.get("recommendation", "")
+
+                            with st.container(border=True):
+                                st.markdown(f"**{cat}** — Severity: `{sev}`")
+                                st.markdown(f"> *Evidence:* \"{evidence}\"")
+                                st.markdown(f"{explanation}")
+                                if recommendation:
+                                    st.markdown(f"*{recommendation}*")
+                    else:
+                        st.success("No red flags detected. This listing appears normal, but always verify in person.")
+
+                    missing = result.get("missing_info", [])
+                    if missing:
+                        with st.expander("Missing Information"):
+                            for m in missing:
+                                st.markdown(f"- {m}")
 
 
 with tab_compare:
@@ -257,7 +209,9 @@ with tab_compare:
     if selected_ids:
         results = []
         for lid in selected_ids:
-            listing = next(l for l in listings if l["id"] == lid)
+            listing = next((l for l in listings if l["id"] == lid), None)
+            if listing is None:
+                continue
             cost = calc.calculate_true_cost(listing, work_zone=work_zone)
             results.append({"listing": listing, "cost": cost})
 
@@ -365,51 +319,58 @@ with tab_email:
 
     if email_listing:
         listing_id = email_listing[0]
-        listing = next(l for l in listings if l["id"] == listing_id)
+        # Clear draft when user switches to a different listing
+        if st.session_state.get("last_email_listing_id") != listing_id:
+            st.session_state.email_draft = None
+            st.session_state.last_email_listing_id = listing_id
 
-        st.markdown("---")
-        st.markdown("**Your Profile**")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            persona = st.radio(
-                "I am a:",
-                options=["young professional", "student", "family"],
-                horizontal=True,
-            )
-        with col2:
-            move_in_date = st.text_input("Move-in date:", value="1st July 2026")
-            has_pets = st.checkbox("I have pets")
-
-        col_gen, col_regen = st.columns(2)
-        with col_gen:
-            generate_clicked = st.button("Generate Draft", key="email_btn")
-        with col_regen:
-            regen_clicked = st.button("Regenerate", key="regen_btn")
-            if not st.session_state.email_draft:
-                regen_clicked = False
-
-        if generate_clicked or regen_clicked:
-            with st.spinner("Drafting..."):
-                # Get red flags first (needed for adaptive logic)
-                detector = RedFlagDetector()
-                red_flags = detector.analyze(listing)
-
-                user_profile = {
-                    "persona": persona,
-                    "move_in_date": move_in_date,
-                    "has_pets": has_pets,
-                }
-
-                drafter = InquiryDrafter()
-                st.session_state.email_draft = drafter.draft(listing, red_flags, user_profile)
-
-        if st.session_state.email_draft:
+        listing = next((l for l in listings if l["id"] == listing_id), None)
+        if listing is None:
+            st.error("Listing not found.")
+        else:
             st.markdown("---")
-            st.markdown("#### Email Draft")
-            st.code(st.session_state.email_draft, language="text")
+            st.markdown("**Your Profile**")
 
-            st.info("This is an AI-generated draft. Please review and personalise before sending.")
+            col1, col2 = st.columns(2)
+            with col1:
+                persona = st.radio(
+                    "I am a:",
+                    options=["young professional", "student", "family"],
+                    horizontal=True,
+                )
+            with col2:
+                move_in_date = st.text_input("Move-in date:", value="1st July 2026")
+                has_pets = st.checkbox("I have pets")
+
+            col_gen, col_regen = st.columns(2)
+            with col_gen:
+                generate_clicked = st.button("Generate Draft", key="email_btn")
+            with col_regen:
+                regen_clicked = st.button("Regenerate", key="regen_btn")
+                if not st.session_state.email_draft:
+                    regen_clicked = False
+
+            if generate_clicked or regen_clicked:
+                with st.spinner("Drafting..."):
+                    # Get red flags first (needed for adaptive logic)
+                    detector = RedFlagDetector()
+                    red_flags = detector.analyze(listing)
+
+                    user_profile = {
+                        "persona": persona,
+                        "move_in_date": move_in_date,
+                        "has_pets": has_pets,
+                    }
+
+                    drafter = InquiryDrafter()
+                    st.session_state.email_draft = drafter.draft(listing, red_flags, user_profile)
+
+            if st.session_state.email_draft:
+                st.markdown("---")
+                st.markdown("#### Email Draft")
+                st.code(st.session_state.email_draft, language="text")
+
+                st.info("This is an AI-generated draft. Please review and personalise before sending.")
 
 
 st.divider()
