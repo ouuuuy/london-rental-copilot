@@ -74,7 +74,7 @@ Open `http://localhost:8501` in your browser.
 
 ---
 
-### 2. Python Engine: Filter (`app/main.py`)
+### 2. Python Engine: Filter (`app/utils/filter_engine.py`)
 **Role**: Deterministic matching between structured constraints and `sample_listings.json`.
 
 **Input**: 

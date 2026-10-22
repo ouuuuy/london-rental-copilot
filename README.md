@@ -59,6 +59,7 @@ Every red flag and recommendation shows its reasoning chain. Critical for high-s
 | AI/LLM | OpenAI GPT-4o-mini (JSON mode) |
 | Language | Python 3.10+ |
 | Data | Local JSON/CSV (static dataset for MVP) |
+| Testing | pytest + unittest.mock (zero-cost agent tests) |
 
 ## Project Structure
 
@@ -70,12 +71,12 @@ london-rental-copilot/
 │   ├── COMPETITIVE_ANALYSIS.md # Rightmove/Zoopla gap analysis
 │   └── PROMPT_DESIGN.md        # System prompt iterations
 ├── data/
-│   ├── sample_listings.json         # 13 curated listings (MVP)
+│   ├── sample_listings.json         # 30 curated listings (MVP)
 │   ├── borough_council_tax.json
 │   ├── station_zone_map.json
 │   └── travelcard_costs.json
 ├── app/
-│   ├── main.py                 # Streamlit entry point
+│   ├── main.py                      # Streamlit entry point
 │   ├── agents/
 │   │   ├── requirement_parser.py
 │   │   ├── redflag_detector.py
@@ -83,9 +84,18 @@ london-rental-copilot/
 │   │   └── inquiry_drafter.py
 │   └── utils/
 │       ├── cost_calculator.py
-│       └── tfl_commute.py
+│       ├── tfl_commute.py
+│       └── filter_engine.py         # Deterministic listing filter
+├── tests/
+│   ├── test_agents.py               # Mock-based agent tests
+│   ├── test_filter_engine.py
+│   ├── test_cost_calculator.py
+│   ├── test_suggested_zones_full_chain.py
+│   └── run_redflag_tests.py         # Integration test (real API)
 ├── notebooks/
-│   └── prototype.ipynb         # Early experiments
+│   └── prototype.ipynb              # Early experiments
+├── .env.example
+├── pytest.ini
 ├── README.md
 └── requirements.txt
 ```
@@ -118,6 +128,16 @@ OPENAI_API_KEY=sk-...
 
 ```bash
 streamlit run app/main.py
+```
+
+### Run Tests
+
+```bash
+# Run all tests (mock tests run instantly; integration tests skip if no API key)
+pytest tests/
+
+# Run only unit tests (no API calls)
+pytest tests/test_filter_engine.py tests/test_cost_calculator.py tests/test_agents.py
 ```
 
 ### Deploy
