@@ -202,7 +202,7 @@ with tab_compare:
     selected_ids = st.multiselect(
         "Select listings:",
         options=[l["id"] for l in listings],
-        format_func=lambda x: next(f"{l['title']} — £{l['price_pcm']}/mo" for l in listings if l["id"] == x),
+        format_func=lambda x: next((f"{l['title']} — £{l['price_pcm']}/mo" for l in listings if l["id"] == x), "Unknown listing"),
         max_selections=3,
     )
 
