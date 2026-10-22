@@ -19,16 +19,16 @@ Highlight trade-offs (e.g., cheaper rent but higher commute cost, or better amen
 
 OUTPUT FORMAT (JSON):
 {
-  "summary": "2-3 sentence overall recommendation",
+  "summary": "String containing 2-3 concise bullet points (max 15 words each), separated by newlines. Use markdown bullet format. Example: '- Budget-friendly: studio in Central London offers significant monthly savings.\n- More space and garden: 2-bed flat in Hackney is worth the extra cost.'",
   "trade_offs": [
-    {"dimension": "cost|commute|space|amenities", "comparison": "Natural language comparison"}
+    {"dimension": "cost|commute|space|amenities", "comparison": "One-sentence comparison"}
   ],
   "winner_for_budget": "listing_id or 'tie'",
   "winner_for_commute": "listing_id or 'tie'",
   "caveats": ["Things the tenant should verify before deciding"]
 }
 
-TONE: Friendly, practical, cautious. Never say "rent this one" — always frame as "consider X if you prioritize Y".
+TONE: Friendly, practical, cautious, concise. Never say "rent this one" — always frame as "consider X if you prioritize Y". Keep every field brief.
 """
 
     def __init__(self, api_key: str = None):
@@ -37,25 +37,46 @@ TONE: Friendly, practical, cautious. Never say "rent this one" — always frame 
 
     def compare(self, listings_with_costs: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
- listings_with_costs: List of listing dicts enriched with 'true_cost' and cost breakdown.
+        listings_with_costs: List of dicts with 'listing' and 'cost' keys.
         """
-        # TODO: Implement OpenAI API call with JSON mode
-        # context = json.dumps(listings_with_costs, ensure_ascii=False)
-        # response = self.client.chat.completions.create(
-        #     model=self.model,
-        #     response_format={"type": "json_object"},
-        #     messages=[
-        #         {"role": "system", "content": self.SYSTEM_PROMPT},
-        #         {"role": "user", "content": f"Compare these listings:\n{context}"},
-        #     ],
-        #     temperature=0.3,
-        # )
-        # return json.loads(response.choices[0].message.content)
+        try:
+            # Build concise context to keep token count low
+            context_items = []
+            for r in listings_with_costs:
+                listing = r["listing"]
+                cost = r["cost"]
+                context_items.append({
+                    "id": listing["id"],
+                    "title": listing["title"],
+                    "location": listing["location_postcode"],
+                    "beds": listing.get("beds"),
+                    "bills_included": listing.get("bills_included"),
+                    "has_garden": listing.get("has_garden"),
+                    "pets_allowed": listing.get("pets_allowed"),
+                    "rent": cost["rent"],
+                    "council_tax": cost["council_tax"],
+                    "commute": cost["commute"],
+                    "utilities": cost["utilities"],
+                    "true_cost": cost["true_cost"],
+                })
+            context = json.dumps(context_items, ensure_ascii=False)
 
-        return {
-            "summary": "Comparison generator not yet implemented.",
-            "trade_offs": [],
-            "winner_for_budget": "tie",
-            "winner_for_commute": "tie",
-            "caveats": ["Implement me!"],
-        }
+            response = self.client.chat.completions.create(
+                model=self.model,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Compare these listings:\n{context}"},
+                ],
+                temperature=0.3,
+            )
+            return json.loads(response.choices[0].message.content)
+
+        except Exception as e:
+            return {
+                "summary": "Comparison summary unavailable. Please review the cost breakdown above.",
+                "trade_offs": [],
+                "winner_for_budget": "tie",
+                "winner_for_commute": "tie",
+                "caveats": [f"Could not generate AI comparison at this time: {str(e)}"],
+            }

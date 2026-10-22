@@ -1,5 +1,52 @@
+
+# ==========================================
+# 1. Environment variables and secrets
+# ==========================================
 .env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# ==========================================
+# 2. Python virtual environments
+# ==========================================
 venv/
+.venv/
+env/
+
+# ==========================================
+# 3. Python cache and temporary files
+# ==========================================
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# 4. Logs
+# ==========================================
+*.log
+
+# ==========================================
+# 5. Jupyter Notebook checkpoints
+# ==========================================
+.ipynb_checkpoints/
+
+# ==========================================
+# 6. Operating system files
+# ==========================================
 .DS_Store
+Thumbs.db
+
+# ==========================================
+# 7. Internal planning documents
+# ==========================================
+docs/day1-5 plan.md
+
+# ==========================================
+# 8. Generated test outputs
+# ==========================================
+tests/comparison_test_output.json
+tests/day4_drafts*.json
+tests/redflag_results.json

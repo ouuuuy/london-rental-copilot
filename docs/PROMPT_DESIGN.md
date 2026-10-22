@@ -51,22 +51,22 @@ RULES:
 
 ### Test Cases
 
-| ID | Input | Expected Output (关键字段) | Actual | Status |
+| ID | Input | Expected Output (Key fields) | Actual | Status |
 |----|-------|---------------------------|--------|--------|
-| T1 | "2 bed, £1,800, pet-friendly, 30 min to Canary Wharf" | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` — Filter: 0 matches (dataset has no 2-bed pet-friendly under £1,800) | ✅ 通过 |
-| T2 | "我想住在一个安静的地方，预算1500" | `{budget: 1500, lifestyle_tags: ["quiet"], confidence: "low"}` | `{budget: 1500, beds: null, lifestyle_tags: ["quiet"], confidence: "low"}` — Filter: 5 matches (all listings ≤£1,500, beds not filtered) | ✅ 通过 |
-| T3 | "Zone 1, under £2000, no pets" | `{budget: 2000, pets_allowed: false, confidence: "medium"}` | `{budget: 2000, pets_allowed: false, commute_target: "Zone 1", confidence: "medium"}` — Filter: 11 matches (excluded 3 pet-friendly listings; Zone 1 not yet enforced by Filter) | ⚠️ 部分通过 |
+| T1 | "2 bed, £1,800, pet-friendly, 30 min to Canary Wharf" | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` | `{budget: 1800, beds: 2, pets_allowed: true, commute_target: "Canary Wharf", commute_time_minutes: 30, confidence: "high"}` — Filter: 0 matches (dataset has no 2-bed pet-friendly under £1,800) | ✅ Pass |
+| T2 | "I want to live in a quiet place, budget 1500" | `{budget: 1500, lifestyle_tags: ["quiet"], confidence: "low"}` | `{budget: 1500, beds: null, lifestyle_tags: ["quiet"], confidence: "low"}` — Filter: 5 matches (all listings ≤£1,500, beds not filtered) | ✅ Pass |
+| T3 | "Zone 1, under £2000, no pets" | `{budget: 2000, pets_allowed: false, confidence: "medium"}` | `{budget: 2000, pets_allowed: false, commute_target: "Zone 1", confidence: "medium"}` — Filter: 11 matches (excluded 3 pet-friendly listings; Zone 1 not yet enforced by Filter) | ⚠️ Partial pass |
 
 ---
 
 ### Iteration Log
 
 **[2026-05-21] v1.0 Initial Test Run**:
-- T1 (英文标准输入): Parser 正确提取 budget/ beds/ pets/ commute_target/ commute_time。Filter 0 matches — 符合数据集现实（无 2-bed + pet-friendly + ≤£1,800 房源）。✅
-- T2 (中文模糊输入): Parser 正确提取 budget=1500，将"安静"映射为 lifestyle_tags=["quiet"]。beds 未提及 → null，Filter 正确不过滤 beds。✅
-- T3 (否定条件): Parser 正确提取 budget=2000, pets_allowed=false。commute_target="Zone 1" 被提取但 **Filter 尚未接入 zone 过滤逻辑**，因此返回了所有非宠物友好的 ≤£2,000 房源（11条）。⚠️ 这是已知功能缺口，不是 Prompt bug。将在 CostCalculator / TfLCommute 集成后补充 zone-based filtering。
+- T1 (English standard input): Parser correctly extracted budget/ beds/ pets/ commute_target/ commute_time. Filter 0 matches — consistent with dataset reality (no 2-bed + pet-friendly + ≤£1,800 listings). ✅ Pass
+- T2 (Chinese fuzzy input): Parser correctly extracted budget=1500, mapped "quiet" to lifestyle_tags=["quiet"]. beds not mentioned → null, Filter correctly does not filter beds. ✅ Pass
+- T3 (Negative condition): Parser correctly extracted budget=2000, pets_allowed=false. commute_target="Zone 1" was extracted but **Filter has not yet integrated zone filtering logic**, therefore returned all non-pet-friendly listings ≤£2,000 (11 items). ⚠️ This is a known feature gap, not a Prompt bug. Will be addressed after CostCalculator / TfLCommute integration is complete. Partial pass.
 
-**当前状态**: v1.0 Prompt 无需修改，3/3 cases 在 Parser 层面表现正确。下一步迭代将发生在 RedFlagDetector（Day 3）。
+**Current status**: v1.0 Prompt needs no modification, 3/3 cases are correct at the Parser level. Next iteration will be on RedFlagDetector (Day 3).
 
 ---
 
@@ -135,11 +135,11 @@ RULES:
 
 | ID | Listing | Expected Flags | Actual | Status |
 |----|---------|---------------|--------|--------|
-| RF1 | listing_003 — SCAM studio | `SCAM_RISK (High)`: "Send deposit via bank transfer" | `SCAM_RISK (High)` — evidence 完整引用原文；overall_risk=high | ✅ 通过 |
-| RF2 | listing_004 — HIDDEN_COST | `HIDDEN_COST_RISK (Medium)`: "Rent excludes bills" (no council tax) | `HIDDEN_COST_RISK (Medium)` — evidence: "Rent excludes bills" | ✅ 通过 (v1.1) |
-| RF3 | listing_006 — DESCRIPTION | `DESCRIPTION_MISMATCH (Low)`: "Truly luxury living" + only 3 images | `HIDDEN_COST_RISK (Medium)` — DESCRIPTION 被模型判定为 common 未 flag | ⚠️ 可接受 |
-| RF4 | listing_005 — PRESSURE | `LANDLORD_PRESSURE (Medium)`: "HURRY!", "Don't sleep on this!!!" | `LANDLORD_PRESSURE (Medium)` + `HIDDEN_COST_RISK (Medium)` (bills_included:false) | ✅ 通过 |
-| RF5 | listing_008 — Clean | No flags, `overall_risk: "low"` | flags=[], overall_risk="low" | ✅ 通过 |
+| RF1 | listing_003 — SCAM studio | `SCAM_RISK (High)`: "Send deposit via bank transfer" | `SCAM_RISK (High)` — evidence complete original text quote; overall_risk=high | ✅ Pass |
+| RF2 | listing_004 — HIDDEN_COST | `HIDDEN_COST_RISK (Medium)`: "Rent excludes bills" (no council tax) | `HIDDEN_COST_RISK (Medium)` — evidence: "Rent excludes bills" | ✅ Pass (v1.1) |
+| RF3 | listing_006 — DESCRIPTION | `DESCRIPTION_MISMATCH (Low)`: "Truly luxury living" + only 3 images | `HIDDEN_COST_RISK (Medium)` — DESCRIPTION judged by the model as common, not flagged | ⚠️ Acceptable |
+| RF4 | listing_005 — PRESSURE | `LANDLORD_PRESSURE (Medium)`: "HURRY!", "Don't sleep on this!!!" | `LANDLORD_PRESSURE (Medium)` + `HIDDEN_COST_RISK (Medium)` (bills_included:false) | ✅ Pass |
+| RF5 | listing_008 — Clean | No flags, `overall_risk: "low"` | flags=[], overall_risk="low" | ✅ Pass |
 
 ---
 
@@ -157,38 +157,38 @@ RULES:
 | PRESSURE Recall (RF4) | 100% ✅ |
 
 **RF1 — listing_003 (SCAM)**:
-- Output: `SCAM_RISK (High)`，evidence 完整引用 "Landlord is abroad. Send deposit via bank transfer to secure. Viewing available after payment."
-- notes 字段还主动补充了 "Price is significantly below market rate for central London" 和 "Only one image provided" — 属于增值分析，未产生误报。
-- ✅ 通过
+- Output: `SCAM_RISK (High)`, evidence complete quote "Landlord is abroad. Send deposit via bank transfer to secure. Viewing available after payment."
+- The notes field also proactively added "Price is significantly below market rate for central London" and "Only one image provided" — this is value-added analysis, no false positives generated.
+- ✅ Pass
 
 **RF2 — listing_004 (HIDDEN_COST)** — **False Negative**:
 - Description: "Rent excludes bills. Professional tenants preferred."
-- Expected: `HIDDEN_COST_RISK (Medium)` 因为 "Rent excludes bills" 未指明具体哪些 bill（未提及 council tax）。
-- Actual: flags=[]，overall_risk="low"。
-- **根因分析**: Prompt v1.0 的 HIDDEN_COST 触发条件是 "'bills excluded' without specifying which"，但模型没有将 "Rent excludes bills" 识别为等价表达。模型对该短语的解读偏向 "陈述事实" 而非 "隐藏成本风险"。
-- **修复方向 (v1.1)**: 在 HIDDEN_COST 定义中增加明确的触发短语列表（"rent excludes bills", "bills not included", "bills excluded"）并补充 few-shot positive example。
+- Expected: `HIDDEN_COST_RISK (Medium)` because "Rent excludes bills" does not specify which bills (council tax not mentioned).
+- Actual: flags=[], overall_risk="low".
+- **Root cause analysis**: Prompt v1.0's HIDDEN_COST trigger condition is "'bills excluded' without specifying which", but the model did not recognize "Rent excludes bills" as an equivalent expression. The model's interpretation of this phrase leans toward "stating a fact" rather than "hidden cost risk".
+- **Fix direction (v1.1)**: In the RedFlagDetector.SYSTEM_PROMPT's HIDDEN_COST_RISK definition, add an explicit trigger phrase list ("rent excludes bills", "bills not included", "bills excluded") and supplement with a few-shot positive example.
 
 **RF3 — listing_006 (DESCRIPTION_MISMATCH)**:
-- Output: `DESCRIPTION_MISMATCH (Low)`，evidence "Truly luxury living in the heart of Angel. High-spec finish throughout."
-- ✅ 通过
+- Output: `DESCRIPTION_MISMATCH (Low)`, evidence "Truly luxury living in the heart of Angel. High-spec finish throughout."
+- ✅ Pass
 
 **RF4 — listing_005 (LANDLORD_PRESSURE)**:
-- Output: `LANDLORD_PRESSURE (Medium)`，evidence 完整覆盖 "HURRY!...Don't sleep on this!!!"
-- 注意: 计划表中 Expected severity 原为 High，但 Prompt 定义 LANDLORD_PRESSURE 为 Medium。实际输出 Medium 与 Prompt 一致，计划表已修正。
-- ✅ 通过
+- Output: `LANDLORD_PRESSURE (Medium)`, evidence fully covers "HURRY!...Don't sleep on this!!!"
+- Note: In the plan table, Expected severity was originally High, but the Prompt defines LANDLORD_PRESSURE as Medium. Actual output Medium is consistent with the Prompt definition; plan table corrected.
+- ✅ Pass
 
 **RF5 — listing_008 (Clean)**:
-- Output: flags=[], overall_risk="low"。无任何误报。
-- ✅ 通过
+- Output: flags=[], overall_risk="low". No false positives.
+- ✅ Pass
 
 ---
 
 ### v1.1 (2026-05-22) — HIDDEN_COST False Negative Fix
 
-**变更点**:
-在 `RedFlagDetector.SYSTEM_PROMPT` 的 **HIDDEN_COST_RISK** 定义中，将触发条件从笼统描述改为更明确的短语列表，并增加 few-shot example。
+**Changes**:
+In `RedFlagDetector.SYSTEM_PROMPT`'s HIDDEN_COST_RISK definition, changed the trigger condition from a vague description to a more explicit phrase list, and added a few-shot example.
 
-**修改后的 HIDDEN_COST_RISK 段落**:
+**Modified HIDDEN_COST_RISK paragraph**:
 ```
 2. HIDDEN_COST_RISK (Medium severity)
    - Triggers: "rent excludes bills" / "bills not included" / "bills excluded" WITHOUT specifying which (gas, electricity, water, council tax); vague service charges; "admin fees" mentioned; council tax not mentioned when rent excludes bills.
@@ -197,9 +197,9 @@ RULES:
    - Example (do NOT flag): "Water rates included" + other bills not mentioned → normal partial disclosure, do not flag.
 ```
 
-**Rationale**: 模型在 v1.0 中对 "Rent excludes bills" 的语义敏感度不足。通过显式列出触发短语并提供一个正例，降低模型对该表达的遗漏率，同时保留 negative example 防止对 "Water rates included" 等正常披露的误报。
+**Rationale**: In v1.0, semantic sensitivity for "Rent excludes bills" was insufficient. By explicitly listing trigger phrases and providing a positive example, we reduce the model's omission rate for this expression, while retaining negative examples to prevent false positives on normal disclosures such as "Water rates included".
 
-**v1.1 实际测试结果**:
+**Actual test results v1.1**:
 
 | Metric | v1.0 | v1.1 |
 |--------|------|------|
@@ -210,20 +210,20 @@ RULES:
 | Clean FP (RF5) | 0 ✅ | 0 ✅ |
 
 **RF2 — listing_004 (HIDDEN_COST)**:
-- Output: `HIDDEN_COST_RISK (Medium)`，evidence: "Rent excludes bills"。✅ 修复成功。
-- notes 还自我修正了 "'Professional tenants preferred' is a common preference and not a pressure tactic" — 体现 conservative 原则。
+- Output: `HIDDEN_COST_RISK (Medium)`, evidence: "Rent excludes bills". ✅ Fix successful.
+- The notes also self-corrected "'Professional tenants preferred' is a common preference and not a pressure tactic" — demonstrating the conservative principle.
 
-**RF3 — listing_006 (DESCRIPTION_MISMATCH)** — **新出现的 False Negative**:
-- v1.0 输出过 `DESCRIPTION_MISMATCH (Low)`，v1.1 输出变成了 `HIDDEN_COST_RISK (Medium)`（依据 "Bills not included. Council tax applies."），DESCRIPTION 被遗漏。
-- **根因**: 模型在单次分析中倾向于聚焦最强 flag。v1.1 强化了 HIDDEN_COST 的触发条件后，模型判定 "Bills not included + Council tax applies" 为 Medium，同时 notes 中说明 "'luxury' and 'high-spec' ... is common and not flagged as a mismatch"。
-- **评估**: 属于可接受的 trade-off。验收标准允许 DESCRIPTION False Negative ≤ 1。从产品经理角度，Medium 的 HIDDEN_COST 比 Low 的 DESCRIPTION_MISMATCH 对用户决策价值更高。
+**RF3 — listing_006 (DESCRIPTION_MISMATCH)** — **New False Negative**:
+- v1.0 output `DESCRIPTION_MISMATCH (Low)`, v1.1 output became `HIDDEN_COST_RISK (Medium)` (based on "Bills not included. Council tax applies."), DESCRIPTION was missed.
+- **Root cause**: The model tends to focus on the strongest flag in a single analysis. After strengthening HIDDEN_COST's trigger condition, the model judged "Bills not included + Council tax applies" as Medium, and at the same time explained in the notes that "'luxury' and 'high-spec' ... is common and not flagged as a mismatch".
+- **Assessment**: This is an acceptable trade-off. Acceptance criteria allow DESCRIPTION False Negative ≤ 1. From a product manager perspective, Medium HIDDEN_COST provides higher decision-making value for the user than Low DESCRIPTION_MISMATCH.
 
 **RF4 — listing_005 (PRESSURE)**:
-- 保留了 `LANDLORD_PRESSURE (Medium)` ✅
-- **新增**: 同时输出了 `HIDDEN_COST_RISK (Medium)`，evidence 是 `bills_included: false`（来自 JSON 结构化字段，而非 description 文本）。
-- **评估**: 严格来说违背了 "Only flag if there is textual evidence in the listing" 规则，但 `bills_included` 本身也是 listing 数据的一部分，且该 listing 确实没有披露 bill 详情。未影响整体风险等级（仍为 medium），不视为严重误报。
+- Retained `LANDLORD_PRESSURE (Medium)` ✅
+- **New**: Also output `HIDDEN_COST_RISK (Medium)`, evidence is `bills_included: false` (from JSON structured field, not description text).
+- **Assessment**: Strictly speaking, this violates the "Only flag if there is textual evidence in the listing" rule, but `bills_included` itself is also part of the listing data, and this listing indeed did not disclose bill details. It did not affect the overall risk level (remains medium), not considered a serious false positive.
 
-**结论**: v1.1 成功修复了 HIDDEN_COST 的零容忍 False Negative，代价是 1 个 DESCRIPTION 的遗漏（在容忍范围内）。当前 Prompt 状态稳定，无需进一步迭代。
+**Conclusion**: v1.1 successfully fixed HIDDEN_COST's zero-tolerance False Negative, at the cost of one DESCRIPTION omission (within tolerance). Current Prompt status is stable, no further iteration needed.
 
 ---
 
@@ -280,14 +280,14 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
 
 | ID | Listing | User Profile | Expected |
 |----|---------|--------------|----------|
-| ID1 | listing_004 (HIDDEN_COST flagged) | young professional, no pets, move-in 1st July | 邮件正文包含对 council tax 的**明确疑问句**（如 "Could you please confirm the council tax band?" / "What is the monthly council tax?"），不能只是陈述句提及 council tax |
-| ID2 | listing_012 (clean, pets allowed) | student, has cat, move-in 1st July | 1) 正文包含 "student" 和 "council tax exemption" 或 "exempt from council tax"；2) 正文包含 "pet" / "cat" 和 "responsible" / "well-trained" 等词；3) 不提及 council tax band 疑问（因为 listing 没有 HIDDEN_COST flag） |
-| ID3 | listing_008 (clean) | young professional, no pets | 1) 正文**不包含** council tax 相关疑问；2) 正文**不包含** pet 相关内容；3) tone concise professional，150-200 词；4) 有明确的 viewing availability proposal |
+| ID1 | listing_004 (HIDDEN_COST flagged) | young professional, no pets, move-in 1st July | Email body contains an explicit question about council tax (e.g. "Could you please confirm the council tax band for the property?" / "What is the monthly council tax?"). Cannot be just a declarative sentence mentioning council tax |
+| ID2 | listing_012 (clean, pets allowed) | student, has cat, move-in 1st July | 1) Email body contains "student" and "council tax exemption" or "exempt from council tax"; 2) Email body contains "pet" / "cat" and "responsible" / "well-trained" etc.; 3) Does not mention council tax band question (because listing has no HIDDEN_COST flag) |
+| ID3 | listing_008 (clean) | young professional, no pets | 1) Email body does NOT contain council tax related questions; 2) Email body does NOT contain pet related content; 3) tone concise professional, 150-200 words; 4) Has explicit viewing availability proposal |
 
-**验收标准细化**:
-- "询问 council tax band" = 邮件中出现针对 council tax 的疑问句（以 ? 结尾且包含 "council tax" 关键词）。仅陈述 "I noted the rent excludes bills" 不算通过。
-- "提及 council tax exemption" = 邮件中出现 "exempt" / "exemption" + "council tax" 关键词组合。
-- "无额外问题" = 邮件中不出现与 listing 已知信息无关的额外询问（如 council tax band, pet policy 等）。
+**Acceptance criteria detail**:
+- "Asking about council tax band" = email contains a question about council tax (ending with ? and containing "council tax" keyword). Only stating "I noted the rent excludes bills" does not count as a pass.
+- "Mentioning council tax exemption" = email contains "exempt" / "exemption" + "council tax" keyword combination.
+- "No extra questions" = email does not contain extra questions unrelated to listing known information (e.g., council tax band, pet policy, etc.).
 
 ---
 
@@ -315,7 +315,7 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
 - ✅ Pass
 
 **ID3 — listing_008 (clean) + young professional**:
-- First attempt: Model asked about council tax despite no red flags. Root cause: `missing_info` from RedFlagDetector contained "Council tax information", which the model treated as a trigger.
+- First attempt: Model asked about council tax despite no red flags. Root cause: `missing_info` from RedFlagDetector contained "Council tax information", which was treated by the model as a trigger.
 - **Fix**: Filtered `missing_info` and `notes` from the context passed to InquiryDrafter. Added explicit rule: "If no red flags are detected, do NOT ask about council tax or service charges."
 - Second attempt: Concise standard email with only viewing request. No council tax question.
 - ✅ Pass
@@ -323,5 +323,5 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
 **RedFlagDetector issue discovered during InquiryDrafter testing**:
 - After switching from Deepseek to OpenAI (gpt-4o-mini), `listing_008` and `listing_012` (both clean) were falsely flagged with `HIDDEN_COST_RISK` because the model used the structured field `bills_included: false` as implicit evidence.
 - **Fix**: Added `_STRUCTURED_FIELDS_TO_EXCLUDE` in `redflag_detector.py` to filter out `bills_included`, `pets_allowed`, `has_garden`, etc. from the LLM context. This forces the model to rely solely on textual evidence in the title and description.
-- Post-fix verification: `listing_003` (SCAM) still flagged correctly; `listing_008` and `listing_012` returned clean.
+- Post-fix verification: `listing_003` (SCAM) still correctly flagged; `listing_008` and `listing_012` returned clean.
 - ✅ Fixed

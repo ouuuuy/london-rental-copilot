@@ -232,6 +232,58 @@ with tab_compare:
         # Disclaimer
         st.caption("⚠️ Council tax estimate is based on Band C-D midpoint when band is unknown. Verify with landlord.")
 
+        st.markdown("---")
+        st.subheader("💡 AI Comparison Summary")
+
+        with st.spinner("Analyzing trade-offs..."):
+            comparator = ComparisonGenerator()
+            comparison = comparator.compare(results)
+
+        # Summary card
+        with st.container(border=True):
+            summary = comparison.get("summary", "")
+            if isinstance(summary, list):
+                for line in summary:
+                    st.markdown(line)
+            else:
+                st.markdown(summary)
+
+        # Trade-offs card
+        if comparison.get("trade_offs"):
+            with st.container(border=True):
+                st.markdown("**Trade-offs**")
+                for to in comparison["trade_offs"]:
+                    st.markdown(f"- **{to['dimension'].title()}**: {to['comparison']}")
+
+        # Winner cards
+        win_col1, win_col2 = st.columns(2)
+        with win_col1:
+            wb = comparison.get("winner_for_budget", "tie")
+            with st.container(border=True):
+                if wb != "tie":
+                    winner = next((r for r in results if r["listing"]["id"] == wb), None)
+                    if winner:
+                        st.success(f"🏆 Best for Budget\n\n**{winner['listing']['title']}**\n£{winner['cost']['true_cost']}/mo")
+                else:
+                    st.info("💰 Budget: Tie\n\nAll selected listings have similar total costs.")
+
+        with win_col2:
+            wc = comparison.get("winner_for_commute", "tie")
+            with st.container(border=True):
+                if wc != "tie":
+                    winner = next((r for r in results if r["listing"]["id"] == wc), None)
+                    if winner:
+                        st.success(f"🏆 Best for Commute\n\n**{winner['listing']['title']}**\n£{winner['cost']['commute']}/mo")
+                else:
+                    st.info("🚇 Commute: Tie\n\nAll selected listings have similar commute costs.")
+
+        # Caveats card
+        if comparison.get("caveats"):
+            with st.container(border=True):
+                st.markdown("**Caveats**")
+                for caveat in comparison["caveats"]:
+                    st.markdown(f"- {caveat}")
+
 
 with tab_email:
     st.subheader("Draft an Enquiry Email")
@@ -279,8 +331,7 @@ with tab_email:
 
             st.markdown("---")
             st.markdown("#### Email Draft")
-            st.text_area("", value=draft, height=300, label_visibility="collapsed")
-            st.copy_button("Copy to Clipboard", value=draft)
+            st.code(draft, language="text")
 
             st.info("This is an AI-generated draft. Please review and personalise before sending.")
 

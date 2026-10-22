@@ -1,6 +1,6 @@
 # London Rental Copilot 🏠🤖
 
-> 从伦敦租房的血泪史里长出来的 AI 产品实验
+> An AI product experiment born from the blood, sweat, and tears of renting in London
 >
 > AI-powered decision-support tool for navigating London's rental market.
 
@@ -145,7 +145,7 @@ MIT
 
 ---
 
-正在寻找伦敦的 AI Product 实习机会。如果你也在做 AI 产品或有建议，欢迎通过 [LinkedIn/Email] 交流。
+Currently seeking AI Product internship opportunities in London. If you're also building AI products or have any feedback, I'd love to connect via [LinkedIn/Email].
 
 ---
 
