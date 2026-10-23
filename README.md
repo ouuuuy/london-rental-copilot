@@ -80,14 +80,13 @@ london-rental-copilot/
 │   │   └── inquiry_drafter.py
 │   └── utils/
 │       ├── cost_calculator.py
-│       ├── tfl_commute.py
 │       └── filter_engine.py         # Deterministic listing filter
 ├── tests/
 │   ├── test_agents.py               # Mock-based agent tests
 │   ├── test_filter_engine.py
 │   ├── test_cost_calculator.py
 │   ├── test_suggested_zones_full_chain.py
-│   └── run_redflag_tests.py         # Integration test (real API)
+│   └── run_redflag_tests.py         # Standalone script for manual red-flag validation (not part of pytest suite)
 ├── .env.example
 ├── pytest.ini
 ├── README.md

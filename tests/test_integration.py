@@ -14,7 +14,6 @@ from agents.comparison_generator import ComparisonGenerator
 from agents.inquiry_drafter import InquiryDrafter
 from utils import CostCalculator
 from utils.filter_engine import filter_listings
-from utils.tfl_commute import TfLCommute
 
 
 # ---------------------------------------------------------------------------
@@ -29,7 +28,6 @@ def test_all_modules_importable():
     assert InquiryDrafter is not None
     assert CostCalculator is not None
     assert filter_listings is not None
-    assert TfLCommute is not None
 
 
 # ---------------------------------------------------------------------------
