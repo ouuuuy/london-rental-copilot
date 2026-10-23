@@ -139,14 +139,6 @@ pytest tests/test_filter_engine.py tests/test_cost_calculator.py tests/test_agen
 
 This app is configured for [Streamlit Community Cloud](https://streamlit.io/cloud) deployment. Connect your GitHub repo and it will auto-deploy.
 
-## What I Learned (AI Product Takeaways)
-
-- **Prompt engineering for structured output**: Iterating on RedFlagDetector prompts with explicit trigger-phrase lists and few-shot examples significantly improved HIDDEN_COST recall while keeping clean-listing High-severity false positives near zero. Key lesson: concrete trigger lists beat vague instructions.
-- **Model behaviour divergence**: Switching from Deepseek to OpenAI (gpt-4o-mini) exposed a new false-positive pattern — the latter treated structured boolean fields (`bills_included: false`) as textual evidence. Fixed by filtering those fields from the LLM context, proving that **prompt design must be validated on every target model**.
-- **Conservative classification design**: Calibrated RedFlagDetector for "better to miss a subtle flag than falsely accuse a legitimate landlord". Added extensive negative examples ("Do NOT flag 'Viewing highly recommended' as pressure"), which reduced marketing-language false positives on the test set.
-- **Deterministic handoff architecture**: All wallet-impacting calculations (rent + council tax + commute) flow through tested Python functions, not LLM estimates. CostCalculator outputs are cross-checked against borough council tax reference data for consistency.
-- **Scope discipline**: Deliberately excluded live scraping, contract review, and chatbot UI to keep the MVP focused on what a hiring manager actually evaluates: prompt precision, agent orchestration, and product trade-off reasoning.
-
 ## Testing
 
 - **57 automated tests** covering Agent exception handling, deterministic filtering, cost calculation, commute-zone logic, and end-to-end workflows.
