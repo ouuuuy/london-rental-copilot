@@ -4,9 +4,9 @@
 >
 > AI-powered decision-support tool for navigating London's rental market.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Streamlit-green)](YOUR_DEMO_LINK_HERE)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Streamlit-green)]()
 [![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
 
 ---
 

@@ -40,16 +40,20 @@ CATEGORY DEFINITIONS:
 2. HIDDEN_COST_RISK (Medium severity)
    - Triggers: "rent excludes bills" / "bills not included" / "bills excluded" WITHOUT specifying which (gas, electricity, water, council tax); vague service charges; "admin fees" mentioned; council tax not mentioned when rent excludes bills.
    - Do NOT flag if listing explicitly states council tax band, says "all bills included", or lists specific excluded bills (e.g., "water included, gas and electricity excluded").
-   - Example (flag): "Rent excludes bills" → HIDDEN_COST_RISK because renter cannot estimate total monthly outlay.
+   - Do NOT flag if the listing JSON includes a council_tax_band field and there are no other unspecified costs (admin fees, service charges, ground rent). The presence of a known council tax band means the renter can calculate this cost.
+   - Example (flag): "Rent excludes bills" with NO council tax band mentioned AND no specific bill breakdown → HIDDEN_COST_RISK because renter cannot estimate total monthly outlay.
+   - Example (do NOT flag): "Rent excludes bills" but council_tax_band is provided in the listing data, and there are no admin fees or service charges mentioned → do NOT flag.
    - Example (do NOT flag): "Water rates included" + other bills not mentioned → normal partial disclosure, do not flag.
 
 3. DESCRIPTION_MISMATCH (Low severity)
    - Triggers: Superlatives ("spacious", "luxury", "high-spec") unsupported by details or photos, "recently renovated" with no kitchen/bathroom mention.
+   - Example (flag): "Incredibly spacious one bedroom flat... Approximately 300 sq ft" → DESCRIPTION_MISMATCH because "incredibly spacious" is contradicted by the objective size data (300 sq ft is compact for a 1-bed).
    - Do NOT flag standard marketing language like "lovely", "bright", "well-presented".
 
 4. LANDLORD_PRESSURE (Medium severity)
    - Triggers: ALL CAPS urgency, "MUST view today", "FIRST COME FIRST SERVE", "20 enquiries already", "available immediately must move in this weekend".
    - Do NOT flag normal availability phrases like "Available from 1st June" or "Viewing highly recommended".
+   - Do NOT flag normal marketing phrases like "many people interested", "popular property", or "high demand".
 
 RULES:
 - Only flag if there is textual evidence in the listing.
@@ -79,6 +83,37 @@ RULES:
         }
         return json.dumps(filtered, ensure_ascii=False)
 
+    @staticmethod
+    def _post_process_flags(listing: Dict[str, Any], result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Deterministic guard: suppress HIDDEN_COST_RISK false positives when
+        the listing includes a council_tax_band and the evidence is only a
+        generic "bills not included" phrase (no specific admin/service charges).
+        """
+        has_band = bool(listing.get("council_tax_band"))
+        if not has_band:
+            return result
+
+        filtered_flags = []
+        for flag in result.get("flags", []):
+            if flag.get("category") == "HIDDEN_COST_RISK":
+                evidence = flag.get("evidence", "").lower()
+                generic_phrases = ["bills not included", "rent excludes bills"]
+                is_generic_only = any(phrase in evidence for phrase in generic_phrases)
+                specific_costs = [
+                    "admin fee", "service charge", "ground rent",
+                    "agency fee", "referencing fee", "management fee",
+                ]
+                has_specific_costs = any(cost in evidence for cost in specific_costs)
+                if is_generic_only and not has_specific_costs:
+                    continue  # suppress false positive
+            filtered_flags.append(flag)
+
+        result["flags"] = filtered_flags
+        if not filtered_flags:
+            result["overall_risk"] = "low"
+        return result
+
     def analyze(self, listing: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze a single listing dictionary and return red flag assessment.
@@ -94,7 +129,8 @@ RULES:
                 ],
                 temperature=0.1,
             )
-            return json.loads(response.choices[0].message.content)
+            result = json.loads(response.choices[0].message.content)
+            return self._post_process_flags(listing, result)
         except (APIError, APITimeoutError):
             return {
                 "overall_risk": "unknown",

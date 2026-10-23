@@ -1,0 +1,307 @@
+{
+  "listing_001": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Specific details about which bills are excluded"
+    ],
+    "notes": "The property is in a desirable location and has a reasonable council tax band, but the lack of clarity on bills could lead to unexpected costs."
+  },
+  "listing_002": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [],
+    "notes": "The listing provides clear information about the council tax band and specifies that water is included while other bills are separate, allowing potential renters to estimate their total monthly outlay."
+  },
+  "listing_003": {
+    "overall_risk": "high",
+    "flags": [
+      {
+        "category": "SCAM_RISK",
+        "severity": "high",
+        "evidence": "Landlord is abroad. Send deposit via bank transfer to secure. Viewing available after payment.",
+        "explanation": "The listing indicates that the landlord is not in the country and requests a deposit to be sent via bank transfer before viewing the property, which is a common scam tactic.",
+        "recommendation": "Do not proceed with this listing. Avoid sending any money before viewing the property and verifying the landlord's legitimacy."
+      }
+    ],
+    "missing_info": [],
+    "notes": "The price of £900 is notably low for a studio in Central London, which raises further suspicion about the legitimacy of the listing."
+  },
+  "listing_004": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details on which specific bills are excluded from the rent"
+    ],
+    "notes": "The property is in a desirable location and has a council tax band provided, which helps in estimating costs, but the lack of clarity on bills is a concern."
+  },
+  "listing_005": {
+    "overall_risk": "medium",
+    "flags": [
+      {
+        "category": "LANDLORD_PRESSURE",
+        "severity": "medium",
+        "evidence": "HURRY! This property will NOT last long. We already have 5 viewings booked today. First person to put down a holding deposit secures it. Don't sleep on this!!!",
+        "explanation": "The listing uses urgent language that pressures potential renters to act quickly, which can be a red flag.",
+        "recommendation": "Take your time to view the property and consider your options before making a decision."
+      }
+    ],
+    "missing_info": [],
+    "notes": "The listing does not mention any additional costs or bills, but since a council tax band is provided, the renter can estimate that cost."
+  },
+  "listing_006": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Specific details about the excluded bills (e.g., gas, electricity, water)"
+    ],
+    "notes": "The property is in a desirable location and has a council tax band provided, which helps in estimating some costs."
+  },
+  "listing_007": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details on which bills are excluded from the rent"
+    ],
+    "notes": "The property is in a desirable location, but be cautious about the unspecified bills."
+  },
+  "listing_008": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about gas and electricity bills not mentioned",
+      "No mention of service charges or admin fees"
+    ],
+    "notes": "The listing provides a good amount of information, including the council tax band, which helps in estimating costs. However, it lacks details on other potential bills."
+  },
+  "listing_009": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Specific details about service charges and ground rent"
+    ],
+    "notes": "The listing mentions service charges and ground rent but does not specify the amounts, which could lead to uncertainty about total monthly costs."
+  },
+  "listing_010": {
+    "overall_risk": "high",
+    "flags": [
+      {
+        "category": "SCAM_RISK",
+        "severity": "high",
+        "evidence": "If you are interested, please send the deposit and first month rent to secure the property.",
+        "explanation": "The landlord is asking for a deposit and first month's rent before you have even viewed the property, which is a common scam tactic.",
+        "recommendation": "Do not send any money until you have viewed the property and confirmed the legitimacy of the landlord."
+      }
+    ],
+    "missing_info": [],
+    "notes": "The mention of the landlord working overseas and requesting payment before viewing raises significant concerns about the legitimacy of this listing."
+  },
+  "listing_011": {
+    "overall_risk": "medium",
+    "flags": [
+      {
+        "category": "LANDLORD_PRESSURE",
+        "severity": "medium",
+        "evidence": "URGENT! Double room available immediately in Stratford!!",
+        "explanation": "The listing uses all caps and phrases like 'MUST view today' and 'FIRST COME FIRST SERVE', which can create pressure on potential renters to act quickly.",
+        "recommendation": "Take your time to consider the property and do not rush into a decision. Ensure you view the property and ask all necessary questions."
+      }
+    ],
+    "missing_info": [],
+    "notes": "While there is a council tax band provided, the urgency and pressure tactics used in the listing are concerning. It's advisable to approach this listing with caution."
+  },
+  "listing_012": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about included or excluded bills",
+      "Photos of the property"
+    ],
+    "notes": "The listing provides a good description of the property and its location, but lacks information on utility bills and does not include any photos, which could help potential renters assess the property better."
+  },
+  "listing_013": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [],
+    "notes": "The listing states that all bills are included except for council tax, and it provides a council tax band, allowing potential renters to estimate their total monthly outlay. The description uses standard marketing language without unsupported superlatives."
+  },
+  "listing_014": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [],
+    "notes": "The listing appears to be straightforward with no red flags. It includes a council tax band, which allows potential renters to estimate their total monthly outlay."
+  },
+  "listing_015": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "No mention of specific bills included or excluded"
+    ],
+    "notes": "The listing describes the property as a 'luxury studio apartment' but does not provide details on the specific amenities or features that justify this description. However, this is common marketing language and does not raise a significant concern."
+  },
+  "listing_016": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about included or excluded bills",
+      "Information on any service charges or admin fees"
+    ],
+    "notes": "The listing provides a reasonable description and includes the council tax band, which allows potential renters to estimate costs. However, it lacks information on other bills and fees."
+  },
+  "listing_017": {
+    "overall_risk": "medium",
+    "flags": [
+      {
+        "category": "HIDDEN_COST_RISK",
+        "severity": "medium",
+        "evidence": "Bills not included. Admin fees for reference checks.",
+        "explanation": "The listing states that bills are not included, but it does not specify which bills are excluded (e.g., gas, electricity, water). This makes it difficult for a renter to estimate their total monthly costs.",
+        "recommendation": "Ask the landlord for a detailed breakdown of which bills are excluded and the amount of any admin fees."
+      }
+    ],
+    "missing_info": [
+      "Specific details about which bills are excluded",
+      "Amount of admin fees"
+    ],
+    "notes": "The property is in a desirable location, but the lack of clarity on additional costs could lead to unexpected expenses."
+  },
+  "listing_018": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about gas and electricity bills not mentioned",
+      "No mention of council tax costs despite council tax band being provided"
+    ],
+    "notes": "The listing appears to be legitimate with no immediate red flags. However, the absence of information regarding gas and electricity bills could lead to uncertainty about total monthly costs."
+  },
+  "listing_019": {
+    "overall_risk": "medium",
+    "flags": [
+      {
+        "category": "LANDLORD_PRESSURE",
+        "severity": "medium",
+        "evidence": "MUST VIEW TODAY! ... confirm by 6pm or it goes to someone else!!",
+        "explanation": "The listing creates a sense of urgency that may pressure potential renters into making a quick decision without fully considering their options.",
+        "recommendation": "Take your time to evaluate the property and consider other options before making a decision."
+      }
+    ],
+    "missing_info": [
+      "Details about included or excluded bills",
+      "Photos of the property"
+    ],
+    "notes": "While the listing is appealing, the urgency may indicate a need for caution. Ensure to verify the property and terms thoroughly."
+  },
+  "listing_020": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about included or excluded bills",
+      "Information on any service charges or admin fees"
+    ],
+    "notes": "The listing is generally positive with no immediate red flags. However, it lacks information on utility bills and any potential additional costs, which could be important for budgeting."
+  },
+  "listing_021": {
+    "overall_risk": "low",
+    "flags": [
+      {
+        "category": "DESCRIPTION_MISMATCH",
+        "severity": "low",
+        "evidence": "Incredibly spacious one bedroom flat... Approximately 300 sq ft.",
+        "explanation": "The listing describes the flat as 'incredibly spacious', but it is only approximately 300 sq ft, which is relatively compact for a one-bedroom flat.",
+        "recommendation": "Consider the size of the flat when evaluating if it meets your needs."
+      }
+    ],
+    "missing_info": [
+      "Details about included or excluded bills"
+    ],
+    "notes": "The listing does not specify if any bills are included in the rent, which could affect total monthly costs."
+  },
+  "listing_022": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [],
+    "notes": "The listing appears to be clear and straightforward, with all bills included and a specified council tax band, allowing potential renters to estimate their total monthly outlay."
+  },
+  "listing_023": {
+    "overall_risk": "high",
+    "flags": [
+      {
+        "category": "SCAM_RISK",
+        "severity": "high",
+        "evidence": "Landlord currently abroad on business. Please send deposit via bank transfer to hold.",
+        "explanation": "The landlord being abroad and requesting a deposit via bank transfer before viewing the property is a common red flag for scams.",
+        "recommendation": "Do not proceed with this listing. Look for properties where you can meet the landlord in person before making any payments."
+      }
+    ],
+    "missing_info": [],
+    "notes": "The request for a deposit before viewing and the landlord being abroad are significant concerns that suggest this listing may not be legitimate."
+  },
+  "listing_024": {
+    "overall_risk": "medium",
+    "flags": [
+      {
+        "category": "HIDDEN_COST_RISK",
+        "severity": "medium",
+        "evidence": "Admin fees apply.",
+        "explanation": "The mention of admin fees without specifying the amount or what they cover can lead to unexpected costs.",
+        "recommendation": "Inquire about the admin fees and what they include before proceeding."
+      }
+    ],
+    "missing_info": [
+      "Specific details about which bills are excluded from the rent",
+      "Amount of admin fees"
+    ],
+    "notes": "While the property appears to be legitimate, the lack of clarity on additional costs could lead to higher expenses than anticipated."
+  },
+  "listing_025": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [],
+    "notes": "The listing appears to be straightforward with no red flags. It includes the council tax band, which allows potential renters to estimate their total monthly outlay."
+  },
+  "listing_026": {
+    "overall_risk": "medium",
+    "flags": [
+      {
+        "category": "LANDLORD_PRESSURE",
+        "severity": "medium",
+        "evidence": "20 enquiries already! This will go FAST. First to view and put down deposit secures it. Don't miss out!!!",
+        "explanation": "The listing uses phrases that create a sense of urgency, suggesting that you need to act quickly to secure the property.",
+        "recommendation": "Take your time to consider the property and do not feel pressured to make a quick decision."
+      }
+    ],
+    "missing_info": [],
+    "notes": "The listing does not mention any additional costs or bills, but since a council tax band is provided, the renter can estimate that cost."
+  },
+  "listing_027": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [],
+    "notes": "The listing appears to be straightforward with all bills included and a specified council tax band, which allows potential renters to estimate their total monthly costs accurately."
+  },
+  "listing_028": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about included or excluded bills",
+      "Information on council tax costs"
+    ],
+    "notes": "The listing provides a good description of the property and its location, but it lacks specific information regarding the bills and council tax costs, which could help potential renters better estimate their total monthly expenses."
+  },
+  "listing_029": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Specific details about the excluded bills (e.g., gas, electricity, water)"
+    ],
+    "notes": "The property is located in a desirable area near public transport and shopping, but be cautious about the potential for additional costs."
+  },
+  "listing_030": {
+    "overall_risk": "low",
+    "flags": [],
+    "missing_info": [
+      "Details about included or excluded bills"
+    ],
+    "notes": "The listing is straightforward and provides essential information, including the council tax band. However, it does not specify whether any bills are included in the rent, which could be useful for potential renters."
+  }
+}
