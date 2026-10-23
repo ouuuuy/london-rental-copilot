@@ -46,11 +46,6 @@ Integrated TfL zone data, council tax bands by borough, and area context. Produc
 ### 3. Explainable AI
 Every red flag and recommendation shows its reasoning chain. Critical for high-stakes decisions like housing.
 
-## Demo
-
-![Demo GIF](docs/demo.gif)
-> TODO: Record a 30-second demo GIF showing the full flow (Search → Flags → Compare → Email).
-
 ## Tech Stack
 
 | Layer | Technology |
