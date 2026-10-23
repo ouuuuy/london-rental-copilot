@@ -21,7 +21,7 @@ An AI copilot that goes beyond filtering to **actively warn** and **contextualiz
 -  **Smart Requirement Parser**: Describe your ideal home in plain English — "2 bed, £1,800, 30 min to Canary Wharf, pet-friendly" — and get realistic zone recommendations you hadn't considered.
 -  **Red Flag Detector**: AI scans listings for scam patterns, hidden costs, and description mismatches. Every warning includes an explanation.
 -  **True Cost Calculator**: Compare properties by total monthly outlay (rent + council tax + commute + estimated utilities), not just headline rent.
--  **Instant Inquiry Drafter**: Generate personalized, polite enquiry emails in seconds — tailored to your profile and any red flags detected.
+-  **Instant Inquiry Drafter**: Generate personalized, polite enquiry emails in seconds — tailored to your profile, preferred tenancy length, and any red flags detected. Copy to clipboard with one click.
 
 ## Product Highlights
 
@@ -155,8 +155,8 @@ This app is configured for [Streamlit Community Cloud](https://streamlit.io/clou
 
 ## Testing
 
-- **48 automated tests** covering Agent exception handling, deterministic filtering, cost calculation, and end-to-end workflows.
-- **47 mock-based tests** (`unittest.mock`) verify all four Agents without consuming API tokens or making network calls.
+- **57 automated tests** covering Agent exception handling, deterministic filtering, cost calculation, commute-zone logic, and end-to-end workflows.
+- **56 mock-based tests** (`unittest.mock`) verify all four Agents without consuming API tokens or making network calls.
 - **1 integration test** (`test_suggested_zones_full_chain.py`) calls the live OpenAI API to validate zone recommendation quality; it auto-skips if `OPENAI_API_KEY` is absent.
 
 Run the full suite:
@@ -169,7 +169,7 @@ pytest tests/
 
 - **Static dataset**: 30 sample listings. No live connection to Rightmove, Zoopla, or OpenRent.
 - **Simplified postcode mapping**: Borough and TfL zone lookups use prefix heuristics, not a full postcode database.
-- **Estimated costs**: Council tax defaults to Band C–D midpoint when the actual band is unknown; commute costs use 2026 static TfL travelcard prices.
+- **Estimated costs**: Council tax uses a three-tier fallback (exact band → bedroom-count heuristic → C–D midpoint); commute costs use 2026 static TfL travelcard prices.
 - **LLM dependency**: Suggested Zones and Red Flag analysis require an OpenAI API key and are subject to model availability.
 
 ## Roadmap

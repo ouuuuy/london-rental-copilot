@@ -81,16 +81,16 @@ Open `http://localhost:8501` in your browser.
 - `dict` (Parser output: structured constraints)
 - `list[dict]` (all listings from `sample_listings.json`)
 
-**Output**: `dict`
+**Output**: `tuple(list[dict], list[dict])` — (matched listings with `match_tags`, excluded listings with `reasons`)
 ```json
-{
-  "matched_listings": ["listing_001", "listing_008"],
-  "match_count": 2,
-  "excluded_with_reasons": [
-    {"id": "listing_003", "reason": "£200 over budget"},
-    {"id": "listing_005", "reason": "No pets allowed"}
-  ]
-}
+[
+  {"id": "listing_001", "title": "...", "match_tags": ["Budget", "Beds", "Commute"]},
+  {"id": "listing_008", "title": "...", "match_tags": ["Budget", "Commute"]}
+],
+[
+  {"id": "listing_003", "title": "...", "reasons": ["£200 over budget"]},
+  {"id": "listing_005", "title": "...", "reasons": ["No pets allowed", "Commute: Zone 3 may exceed 15 min to Oxford Circus"]}
+]
 ``` 
 
 **Logic**:
@@ -98,6 +98,7 @@ Open `http://localhost:8501` in your browser.
 - Beds: `listing.beds == constraints.beds` (or `>=` if user says "2+ bed")
 - Pets: `listing.pets_allowed == true` if `constraints.pets_allowed == true`
 - Garden: `listing.has_garden == true` if `constraints.has_garden == true`
+- Commute / Zone: If `constraints.commute_target` is present, map it to a TfL zone via `station_zone_map.json`, compute the zone difference from the listing's postcode, and exclude if the difference exceeds the allowable threshold (`commute_time_minutes // 15`, default max 2 zones).
 - Excluded listings annotated with reason (e.g., "£200 over budget")
 
 **Why deterministic?**: Matching logic must be explainable, testable, and hallucination-proof.
@@ -180,13 +181,14 @@ Open `http://localhost:8501` in your browser.
 ```
 
 #### InquiryDrafter
-**Input**: `dict` (listing) + `dict` (red flags) + `dict` (user profile: persona, move-in date, pets).  
+**Input**: `dict` (listing) + `dict` (red flags) + `dict` (user profile: persona, move-in date, pets, preferred_tenancy_length).  
 **Output**: `str` — polished enquiry email.
 
 **Adaptive logic**:
 - If `HIDDEN_COST_RISK` detected → include polite request to confirm council tax.
 - If persona == "student" → mention council tax exemption.
 - If `has_pets` → mention responsible pet ownership.
+- If `preferred_tenancy_length` is specified and not "Not specified" → mention it naturally in the email (e.g., "I am looking for a 12-month tenancy").
 
 **Model**: GPT-4o-mini, temperature=0.3 (slightly higher for natural tone variation).
 

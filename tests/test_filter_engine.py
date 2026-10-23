@@ -73,3 +73,77 @@ def test_filter_match_tags_populated():
     constraints = {"budget": 1500, "beds": 1, "pets_allowed": True, "has_garden": True}
     matched, excluded = filter_listings(constraints, listings)
     assert set(matched[0]["match_tags"]) == {"Budget", "Beds", "Pets", "Garden"}
+
+
+# ---------------------------------------------------------------------------
+# Commute / Zone filtering tests
+# ---------------------------------------------------------------------------
+
+def test_filter_by_commute_zone_match_same_zone():
+    listings = [
+        {"id": "l1", "title": "Canary Wharf flat", "price_pcm": 1500, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "E14 5AB"},
+    ]
+    constraints = {"commute_target": "Canary Wharf", "commute_time_minutes": 30}
+    matched, excluded = filter_listings(constraints, listings)
+    assert len(matched) == 1
+    assert "Commute" in matched[0]["match_tags"]
+
+
+def test_filter_by_commute_zone_exclude_too_far():
+    listings = [
+        {"id": "l1", "title": "Stratford flat", "price_pcm": 1200, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "E15 1AA"},
+    ]
+    # Oxford Circus is zone 1, Stratford (E15) is zone 3, diff=2
+    # commute_time_minutes=15 → max_allowed = 1
+    constraints = {"commute_target": "Oxford Circus", "commute_time_minutes": 15}
+    matched, excluded = filter_listings(constraints, listings)
+    assert len(matched) == 0
+    assert len(excluded) == 1
+    assert "Commute" in excluded[0]["reasons"][0]
+
+
+def test_filter_by_commute_no_time_limit():
+    listings = [
+        {"id": "l1", "title": "Stratford flat", "price_pcm": 1200, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "E15 1AA"},
+    ]
+    # No commute_time_minutes → default max_allowed_diff = 2
+    # Oxford Circus (z1) vs E15 (z3), diff=2 → match
+    constraints = {"commute_target": "Oxford Circus"}
+    matched, excluded = filter_listings(constraints, listings)
+    assert len(matched) == 1
+    assert "Commute" in matched[0]["match_tags"]
+
+
+def test_filter_by_commute_unknown_target():
+    listings = [
+        {"id": "l1", "title": "Stratford flat", "price_pcm": 1200, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "E15 1AA"},
+    ]
+    # Unknown commute target → no commute filter applied
+    constraints = {"commute_target": "Mars Station"}
+    matched, excluded = filter_listings(constraints, listings)
+    assert len(matched) == 1
+    assert "Commute" not in matched[0]["match_tags"]
+
+
+def test_filter_by_commute_target_none():
+    listings = [
+        {"id": "l1", "title": "Stratford flat", "price_pcm": 1200, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "E15 1AA"},
+    ]
+    constraints = {}
+    matched, excluded = filter_listings(constraints, listings)
+    assert len(matched) == 1
+    assert "Commute" not in matched[0]["match_tags"]
+
+
+def test_filter_commute_combined_with_budget():
+    listings = [
+        {"id": "l1", "title": "Cheap far flat", "price_pcm": 900, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "E15 1AA"},
+        {"id": "l2", "title": "Expensive close flat", "price_pcm": 2000, "beds": 1, "pets_allowed": False, "has_garden": False, "location_postcode": "W1D 1AA"},
+    ]
+    # Oxford Circus (z1) vs E15 (z3) diff=2, max_allowed=1 (time=15) → exclude l1
+    # Oxford Circus (z1) vs W1D (z1) diff=0 → include l2
+    constraints = {"commute_target": "Oxford Circus", "commute_time_minutes": 15, "budget": 2500}
+    matched, excluded = filter_listings(constraints, listings)
+    assert len(matched) == 1 and matched[0]["id"] == "l2"
+    assert len(excluded) == 1 and excluded[0]["id"] == "l1"
+    assert "Commute" in excluded[0]["reasons"][0]

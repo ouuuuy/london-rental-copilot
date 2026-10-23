@@ -31,6 +31,7 @@ RULES:
 - Do not invent personal details not provided in the user profile (e.g., do not invent a job title).
 - If the listing is clean (no red flags) and the user is a standard professional without pets, keep the email concise and standard.
 - If persona is "student", proactively mention that you are a full-time student and may be eligible for council tax exemption. Do this in a natural, brief sentence.
+- If the user specifies a preferred tenancy length (e.g., "12 months"), mention it naturally in the email. Only do this if the length is not "Not specified".
 - End with a professional sign-off.
 
 OUTPUT FORMAT:
@@ -104,6 +105,9 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
         elif persona == 'family':
             persona_hint = " (family: mention suitability for family living)"
 
+        tenancy = user_profile.get('preferred_tenancy_length', 'Not specified')
+        tenancy_line = f"- Preferred tenancy length: {tenancy}"
+
         lines.extend(
             [
                 "",
@@ -111,6 +115,7 @@ Return ONLY the email text (including subject line). No markdown code blocks, no
                 f"- Persona: {persona}{persona_hint}",
                 f"- Move-in date: {user_profile.get('move_in_date', 'ASAP')}",
                 f"- Has pets: {user_profile.get('has_pets', False)}",
+                tenancy_line,
                 "",
                 "Please draft a polite, professional enquiry email based on the above.",
                 "IMPORTANT: Only ask about council tax if there is a HIDDEN_COST_RISK flag above.",

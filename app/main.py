@@ -1,6 +1,7 @@
 import os
 import json
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 
 # Load .env BEFORE importing agents, so HTTP_PROXY and API keys are available
@@ -47,6 +48,22 @@ def load_data(_hash):
 
 
 listings, council_tax, stations, _ = load_data(_hash=_data_file_hash())
+
+
+def _copy_button(text: str, key: str):
+    """Inject a client-side Copy to Clipboard button via HTML/JS."""
+    escaped = json.dumps(text)
+    components.html(
+        f"""
+        <button onclick="navigator.clipboard.writeText({escaped}); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy to Clipboard', 2000);"
+                style="padding: 0.5rem 1rem; background: #0e1117; color: #fafafa; border: 1px solid #555; border-radius: 4px; cursor: pointer; font-family: sans-serif;">
+            Copy to Clipboard
+        </button>
+        """,
+        height=50,
+        key=key,
+    )
+
 
 # Sidebar
 with st.sidebar:
@@ -342,6 +359,12 @@ with tab_email:
                 move_in_date = st.text_input("Move-in date:", value="1st July 2026")
                 has_pets = st.checkbox("I have pets")
 
+            preferred_tenancy_length = st.selectbox(
+                "Preferred tenancy length:",
+                options=["6 months", "12 months", "24 months", "Not specified"],
+                index=1,
+            )
+
             col_gen, col_regen = st.columns(2)
             with col_gen:
                 generate_clicked = st.button("Generate Draft", key="email_btn")
@@ -360,6 +383,7 @@ with tab_email:
                         "persona": persona,
                         "move_in_date": move_in_date,
                         "has_pets": has_pets,
+                        "preferred_tenancy_length": preferred_tenancy_length,
                     }
 
                     drafter = InquiryDrafter()
@@ -369,6 +393,8 @@ with tab_email:
                 st.markdown("---")
                 st.markdown("#### Email Draft")
                 st.code(st.session_state.email_draft, language="text")
+
+                _copy_button(st.session_state.email_draft, key="copy_email_btn")
 
                 st.info("This is an AI-generated draft. Please review and personalise before sending.")
 
