@@ -16,12 +16,36 @@ def test_council_tax_with_known_band():
     assert result["monthly"] > 0
 
 
-def test_council_tax_estimate_without_band():
+def test_council_tax_heuristic_studio():
+    calc = CostCalculator()
+    result = calc.estimate_council_tax("E1 6AN", beds=0)
+    assert result["band"] == "B"
+    assert "heuristic" in result["disclaimer"].lower()
+    assert result["monthly"] == round(165 * 7 / 9)  # Tower Hamlets Band B
+
+
+def test_council_tax_heuristic_1bed():
+    calc = CostCalculator()
+    result = calc.estimate_council_tax("E1 6AN", beds=1)
+    assert result["band"] == "C"
+    assert "heuristic" in result["disclaimer"].lower()
+    assert result["monthly"] == round(165 * 8 / 9)  # Tower Hamlets Band C
+
+
+def test_council_tax_heuristic_2bed():
+    calc = CostCalculator()
+    result = calc.estimate_council_tax("E1 6AN", beds=2)
+    assert result["band"] == "D"
+    assert "heuristic" in result["disclaimer"].lower()
+    assert result["monthly"] == 165  # Tower Hamlets Band D
+
+
+def test_council_tax_fallback_no_band_no_beds():
     calc = CostCalculator()
     result = calc.estimate_council_tax("E1 6AN")
     assert result["band"] is None
     assert "midpoint" in result["disclaimer"].lower()
-    assert result["monthly"] > 0
+    assert result["monthly"] == round(165 * 0.944)
 
 
 def test_commute_cost_same_zone():
@@ -56,6 +80,7 @@ def test_true_cost_bills_included():
     cost = calc.calculate_true_cost(listing, work_zone="2")
     assert cost["rent"] == 1500
     assert cost["utilities"] == 0
+    assert cost["council_tax_band"] == "C"  # beds=1 triggers heuristic Band C
     assert cost["true_cost"] == cost["rent"] + cost["council_tax"] + cost["commute"]
 
 
@@ -71,6 +96,7 @@ def test_true_cost_bills_excluded():
     cost = calc.calculate_true_cost(listing, work_zone="2")
     assert cost["rent"] == 1500
     assert cost["utilities"] == 120
+    assert cost["council_tax_band"] == "C"  # beds=1 triggers heuristic Band C
     assert cost["true_cost"] == cost["rent"] + cost["council_tax"] + cost["commute"] + cost["utilities"]
 
 

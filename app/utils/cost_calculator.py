@@ -29,13 +29,18 @@ class CostCalculator:
         with open(travelcard_path, "r", encoding="utf-8") as f:
             self.travelcards = json.load(f)["zones"]
 
-    def estimate_council_tax(self, postcode: str, band: str = None) -> Dict[str, Any]:
+    def estimate_council_tax(
+        self, postcode: str, band: str = None, beds: int = None
+    ) -> Dict[str, Any]:
         """
         Map a London postcode to an estimated monthly council tax.
         Uses borough prefix heuristics (e.g., SE14 -> Lewisham).
 
-        If band is specified, compute exact monthly cost from the band ratio.
-        If band is not specified, estimate as Band C-D midpoint.
+        Priority:
+        1. If band is specified → exact monthly cost from the band ratio.
+        2. If band is missing but beds is known → heuristic band based on bedroom count
+           (studio→B, 1-bed→C, 2-bed+→D) as per PRD §4.3.
+        3. Ultimate fallback → Band C-D midpoint.
         """
         borough = self._postcode_to_borough(postcode)
         band_d_monthly = self.council_tax.get(borough, 160)
@@ -48,15 +53,34 @@ class CostCalculator:
                 "borough": borough,
                 "disclaimer": None,
             }
-        else:
-            # Band C-D midpoint = (Band_C + Band_D) / 2 = (8/9 * D + D) / 2 ≈ 0.944 * D
-            monthly = round(band_d_monthly * 0.944)
+
+        # Heuristic inference based on bedroom count (PRD §4.3)
+        if beds is not None:
+            if beds == 0:          # studio
+                heuristic_band = "B"
+            elif beds == 1:
+                heuristic_band = "C"
+            else:                  # 2-bed+
+                heuristic_band = "D"
+            monthly = round(band_d_monthly * self.BAND_RATIOS[heuristic_band])
             return {
                 "monthly": monthly,
-                "band": None,
+                "band": heuristic_band,
                 "borough": borough,
-                "disclaimer": "Estimated as Band C-D midpoint. Actual band (A-H) set by VOA. Verify with landlord.",
+                "disclaimer": (
+                    f"Estimated as Band {heuristic_band} based on {beds}-bed heuristic. "
+                    "Actual band (A-H) set by VOA. Verify with landlord."
+                ),
             }
+
+        # Ultimate fallback: Band C-D midpoint
+        monthly = round(band_d_monthly * 0.944)
+        return {
+            "monthly": monthly,
+            "band": None,
+            "borough": borough,
+            "disclaimer": "Estimated as Band C-D midpoint. Actual band (A-H) set by VOA. Verify with landlord.",
+        }
 
     def estimate_commute_cost(self, home_zone: str, work_zone: str = "1") -> float:
         """
@@ -99,8 +123,9 @@ class CostCalculator:
 
         # Council Tax
         band = listing.get("council_tax_band")
+        beds = listing.get("beds")
         council_tax_result = self.estimate_council_tax(
-            listing.get("location_postcode", ""), band
+            listing.get("location_postcode", ""), band, beds
         )
         council_tax = council_tax_result["monthly"]
         council_tax_disclaimer = council_tax_result.get("disclaimer")

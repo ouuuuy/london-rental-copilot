@@ -68,8 +68,9 @@ london-rental-copilot/
 ├── docs/
 │   ├── PRD.md                  # Product Requirements Document
 │   ├── USER_RESEARCH.md        # Pain point validation
-│   ├── COMPETITIVE_ANALYSIS.md # Rightmove/Zoopla gap analysis
-│   └── PROMPT_DESIGN.md        # System prompt iterations
+│   ├── PRODUCT_DECISIONS.md    # Architecture and trade-off log
+│   ├── PROMPT_DESIGN.md        # System prompt iterations
+│   └── TECH_SPEC.md            # Technical specification
 ├── data/
 │   ├── sample_listings.json         # 30 curated listings (MVP)
 │   ├── borough_council_tax.json
@@ -92,8 +93,6 @@ london-rental-copilot/
 │   ├── test_cost_calculator.py
 │   ├── test_suggested_zones_full_chain.py
 │   └── run_redflag_tests.py         # Integration test (real API)
-├── notebooks/
-│   └── prototype.ipynb              # Early experiments
 ├── .env.example
 ├── pytest.ini
 ├── README.md
@@ -109,10 +108,12 @@ london-rental-copilot/
 ### Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/london-rental-copilot.git
+git clone https://github.com/ouuuuy/london-rental-copilot.git
 cd london-rental-copilot
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate          # macOS / Linux
+# venv\Scripts\activate            # Windows CMD
+# venv\Scripts\Activate.ps1        # Windows PowerShell
 pip install -r requirements.txt
 ```
 
@@ -146,11 +147,30 @@ This app is configured for [Streamlit Community Cloud](https://streamlit.io/clou
 
 ## What I Learned (AI Product Takeaways)
 
-- **Prompt engineering for structured output**: 2 iterations on RedFlagDetector took HIDDEN_COST recall from 0% to 100% while keeping clean-listing High-severity false positives at 0. Key lesson: explicit trigger-phrase lists + few-shot examples beat vague instructions.
+- **Prompt engineering for structured output**: Iterating on RedFlagDetector prompts with explicit trigger-phrase lists and few-shot examples significantly improved HIDDEN_COST recall while keeping clean-listing High-severity false positives near zero. Key lesson: concrete trigger lists beat vague instructions.
 - **Model behaviour divergence**: Switching from Deepseek to OpenAI (gpt-4o-mini) exposed a new false-positive pattern — the latter treated structured boolean fields (`bills_included: false`) as textual evidence. Fixed by filtering those fields from the LLM context, proving that **prompt design must be validated on every target model**.
-- **Conservative classification design**: Calibrated RedFlagDetector for "better to miss a subtle flag than falsely accuse a legitimate landlord". Added extensive negative examples ("Do NOT flag 'Viewing highly recommended' as pressure"), driving marketing-language false positives to 0 on the test set.
-- **Deterministic handoff architecture**: All wallet-impacting calculations (rent + council tax + commute) flow through tested Python functions, not LLM estimates. CostCalculator manually verified on 3 listings — error = £0.
-- **Scope discipline**: Deliberately excluded live scraping, contract review, and chatbot UI to keep the 5-day MVP focused on what a hiring manager actually evaluates: prompt precision, agent orchestration, and product trade-off reasoning.
+- **Conservative classification design**: Calibrated RedFlagDetector for "better to miss a subtle flag than falsely accuse a legitimate landlord". Added extensive negative examples ("Do NOT flag 'Viewing highly recommended' as pressure"), which reduced marketing-language false positives on the test set.
+- **Deterministic handoff architecture**: All wallet-impacting calculations (rent + council tax + commute) flow through tested Python functions, not LLM estimates. CostCalculator outputs are cross-checked against borough council tax reference data for consistency.
+- **Scope discipline**: Deliberately excluded live scraping, contract review, and chatbot UI to keep the MVP focused on what a hiring manager actually evaluates: prompt precision, agent orchestration, and product trade-off reasoning.
+
+## Testing
+
+- **48 automated tests** covering Agent exception handling, deterministic filtering, cost calculation, and end-to-end workflows.
+- **47 mock-based tests** (`unittest.mock`) verify all four Agents without consuming API tokens or making network calls.
+- **1 integration test** (`test_suggested_zones_full_chain.py`) calls the live OpenAI API to validate zone recommendation quality; it auto-skips if `OPENAI_API_KEY` is absent.
+
+Run the full suite:
+
+```bash
+pytest tests/
+```
+
+## Current Limitations
+
+- **Static dataset**: 30 sample listings. No live connection to Rightmove, Zoopla, or OpenRent.
+- **Simplified postcode mapping**: Borough and TfL zone lookups use prefix heuristics, not a full postcode database.
+- **Estimated costs**: Council tax defaults to Band C–D midpoint when the actual band is unknown; commute costs use 2026 static TfL travelcard prices.
+- **LLM dependency**: Suggested Zones and Red Flag analysis require an OpenAI API key and are subject to model availability.
 
 ## Roadmap
 
@@ -158,15 +178,3 @@ This app is configured for [Streamlit Community Cloud](https://streamlit.io/clou
 - [ ] v1.1: Image analysis for stock-photo detection
 - [ ] v1.2: Market-rate benchmarking (is this flat under/overpriced?)
 - [ ] v2.0: Browser extension for Rightmove/Zoopla injection
-
-## License
-
-MIT
-
----
-
-Currently seeking AI Product internship opportunities in London. If you're also building AI products or have any feedback, I'd love to connect via [LinkedIn/Email].
-
----
-
-*Built with frustration-fueled passion during a London flat hunt.*

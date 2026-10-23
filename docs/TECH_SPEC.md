@@ -150,11 +150,11 @@ Open `http://localhost:8501` in your browser.
 ```
 
 **Deterministic rules**:
-- **Council Tax**: 
-  - If listing has `council_tax_band` field → use exact rate from `borough_council_tax.json`
-  - If band not specified → estimate as Band C-D midpoint for that borough
-  - Add disclaimer: "[WARN] Actual band (A-H) set by VOA. Verify with landlord."
-  - **Never infer band from bedroom count** (bands are based on 1991 valuations)
+- **Council Tax** (three-tier fallback):
+  1. If listing has `council_tax_band` field → use exact rate from `borough_council_tax.json`.
+  2. If band is missing but `beds` is known → apply a **bedroom-count heuristic** (studio→Band B, 1-bed→Band C, 2-bed+→Band D). This is a deliberate product simplification: council tax bands are technically based on 1991 property valuations, not bedroom count, but bedroom count correlates well enough for an MVP estimate and produces more accurate per-listing guesses than a uniform C-D midpoint.
+  3. If neither band nor beds is known → fall back to Band C-D midpoint for that borough.
+  - All estimates carry a disclaimer: "Actual band (A-H) set by VOA. Verify with landlord."
 - Commute: postcode prefix → borough → station → TfL zone → travelcard cost from `travelcard_costs.json`.
 - Utilities: fixed heuristic (`£120` for 1-bed, `£160` for 2-bed).
 
